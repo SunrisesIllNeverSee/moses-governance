@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "moses-governance": {
+      "command": "python3",
+      "args": ["server.py"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}
