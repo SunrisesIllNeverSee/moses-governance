@@ -119,7 +119,7 @@ moses-governance/
   "name": "moses-governance",
   "version": "1.0.0",
   "displayName": "MO§ES™ Governance",
-  "description": "Constitutional governance framework for Claude. Set behavioral modes, enforce role hierarchy, control posture, inject governance documents, and maintain cryptographic audit trails. Patent-pending. Peer-reviewed.",
+  "description": "Constitutional governance framework for Claude. Set behavioral modes, enforce role hierarchy, control posture, inject governance documents, and maintain cryptographic audit trails. Patent-pending. Preprint published (Zenodo, 2026).",
   "author": {
     "name": "Ello Cello LLC",
     "email": "contact@burnmydays.com",
@@ -474,7 +474,7 @@ The IP. The core. The thing nobody else has.
 - **Cryptographic audit trail** with SHA-256 hash chaining and integrity verification
 - **Enterprise documentation** covering deployment patterns for teams and organizations
 - **Patent backing** — PPA4, Serial No. 63/877,177
-- **Peer-reviewed validation** — published paper with independent confirmation
+- **Preprint published** — "A Conservation Law for Commitment in Language" (McHenry, Zenodo, 2026), with independent support from peer-reviewed cryptographic research (ABBA, Imperial College London)
 - **Live demo** — mos2es.io is already deployed
 - **Source-available license** — not a weekend project that'll be abandoned
 - **Hook-based guardrails** — pre-execute and post-execute hooks for deterministic governance enforcement
@@ -492,7 +492,7 @@ The external plugin submission is at `clau.de/plugin-directory-submission`. Here
 
 **Display name:** MO§ES™ Governance — Constitutional Control for Claude
 
-**One-liner:** The only governance framework for AI agents — behavioral modes, role hierarchy, posture controls, and cryptographic audit trails. Patent-pending. Peer-reviewed.
+**One-liner:** The only governance framework for AI agents — behavioral modes, role hierarchy, posture controls, and cryptographic audit trails. Patent-pending. Preprint published (Zenodo, 2026).
 
 **Description:**
 MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is a constitutional governance framework that transforms how Claude operates. Instead of prompting Claude with instructions that can be ignored, MO§ES™ enforces behavioral constraints through governance modes, role hierarchy, posture controls, and cryptographic audit trails.

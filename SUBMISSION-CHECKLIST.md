@@ -113,7 +113,7 @@ git push -u origin main
 - Submit at: everything-claude-code (or official plugin directory when open)
 - Include: repo URL + mos2es.io demo link
 - Category: Governance / Enterprise
-- Description: "Constitutional governance framework for Claude. 8 modes, role hierarchy, posture controls, audit trail with SHA-256 hashing, vault injection. Patent-pending. Peer-reviewed."
+- Description: "Constitutional governance framework for Claude. 8 modes, role hierarchy, posture controls, audit trail with SHA-256 hashing, vault injection. Patent-pending. Preprint published (Zenodo, 2026)."
 
 ---
 
