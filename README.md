@@ -179,21 +179,21 @@ moses-governance/
 
 ## What Makes This Defensible
 
-Three things combine into a moat that no other plugin in this space currently has:
+Three things combine into a moat that no other agent-governance plugin in this space currently has:
 
-**The theoretical framework.** The McHenry Conservation Law is a named, published, DOI-citable contribution to the AI governance literature. Competitors cannot implement "commitment conservation" without citing the work that defined it. The Zenodo preprint is the anchor.
+**The theoretical framework.** The McHenry Conservation Law (commitment conservation) is introduced and defined in a DOI-cited Zenodo preprint on AI governance. Competing systems that adopt the same construct in academic or technical contexts are expected to reference that work.
 
-**The patent.** PPA4, Serial No. 63/877,177 covers the architecture. A competing plugin that replicates the MO§ES™ approach — external MCP referee daemon, commitment scoring, constitutional amendment protocol — does so in the shadow of this IP.
+**The patent application.** A US provisional patent application (Serial No. 63/877,177) has been filed covering the architecture: an external referee daemon, commitment scoring, and a constitutional amendment protocol driven by operational history. A competing plugin that replicates this approach does so in the shadow of that filing.
 
-**The self-amending constitution.** No other AI governance platform, at any tier, has a constitution that reads its own audit trail and proposes improvements. Meta-governance — the governance system governing itself — is architecturally novel and widens the gap over time as the constitution accumulates operational history.
+**The self-amending constitution.** To our knowledge, no other agent-governance plugin combines commitment conservation, chained auditing, and a self-amending constitution that reads its own audit trail and proposes updates. Meta-governance — the governance system governing itself — widens the gap over time as the constitution accumulates operational history.
 
 ## Current Limitations
 
-**Conversational enforcement:** The hook system fires on tool use (Bash, Write, Edit) — not on every message. Conversational responses are governed by skill instructions that Claude follows as constitutional directives. A sufficiently insistent operator could argue Claude out of compliance in pure conversation. This is a constraint of the current Claude Code architecture, not a MO§ES™ failure. The MCP server layer moves enforcement into programmatic territory; full pre-response interception requires inference-layer access only Anthropic can provide.
+**Conversational enforcement:** Governance hooks currently fire on tool use (code execution, file operations) — not on every conversational turn. Conversational responses follow constitutional instructions but can be pushed off-policy by a determined operator. Full pre-response enforcement would require inference-layer controls outside this plugin's scope.
 
-**HMAC operator identity:** Amendment signatures are single-factor on the secret key (`MOSES_OPERATOR_SECRET`). The key is required — nothing amends without it — but proposal-ID binding to a specific operator identity is not yet enforced. Operator identity scoping is a v2.0 item. See [Enterprise Use](ENTERPRISE-USE.md) for full security posture.
+**HMAC operator identity:** Amendment signatures depend on a shared secret (`MOSES_OPERATOR_SECRET`). No amendment can be applied without that key, but proposals are not yet bound cryptographically to individual operator identities. Per-operator identity scoping is planned for a later version. See [Enterprise Use](docs/ENTERPRISE-USE.md) for full security posture.
 
-**Signal-word concept extraction:** `check_action_permitted()` uses keyword matching to detect prohibited concepts. Domain-specific jargon that doesn't appear in the signal lists may not be caught. The current list covers common vectors and known paraphrase patterns; it is not exhaustive.
+**Signal-word concept extraction:** Prohibited-action checks use curated signal words and patterns. This covers many common vectors and paraphrases but is not exhaustive; domain-specific jargon may require tuning. The plugin is designed to complement, not replace, organizational policy and human review.
 
 ## Documentation
 
@@ -205,9 +205,7 @@ Three things combine into a moat that no other plugin in this space currently ha
 
 ## Why This Exists
 
-65,000+ AI agents operate across enterprise and blockchain ecosystems without a governance framework controlling how they behave. Every platform governs transactions. Nobody governs the agent.
-
-This plugin is the governance layer.
+Tens of thousands of AI agents now operate inside enterprises and on-chain ecosystems, while most governance focuses on transactions and outputs — not the agent itself. MO§ES™ provides a governance layer around the agent: modes, roles, postures, and constitutional oversight on top of your existing workflows.
 
 **MO§ES™** governs the agent.
 
