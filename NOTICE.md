@@ -16,6 +16,6 @@
 
 ## Attribution
 
-The MO§ES™ governance framework was developed by Ello Cello LLC. The theoretical foundations are published in a preprint preprint extending Shannon's information theory into semantic domains, with independent validation from cryptographic research (ABBA, Imperial College London).
+The MO§ES™ governance framework was developed by Ello Cello LLC. The theoretical foundations are published in a preprint — *"A Conservation Law for Commitment in Language Under Transformative Compression and Recursive Application"* (McHenry, Zenodo, 2026) — which proposes semantic commitment as an invariant under compression and recursive application, with MO§ES™ as the enforcement architecture. The theoretical framework is further supported by independent peer-reviewed cryptographic research ("ABBA", Imperial College London).
 
 © 2026 Ello Cello LLC. All rights reserved.

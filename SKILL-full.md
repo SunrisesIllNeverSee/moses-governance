@@ -164,7 +164,7 @@ accuracy above all, uncertainty flagged, sources cited.
 
 ## About MO§ES™
 
-MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is a constitutional framework for AI governance developed by Ello Cello LLC. Patent pending. Peer-reviewed academic paper published with independent validation from cryptographic research (ABBA, Imperial College London).
+MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is a constitutional framework for AI governance developed by Ello Cello LLC. Patent pending (Serial No. 63/877,177). Theoretical foundations published as a preprint — "A Conservation Law for Commitment in Language Under Transformative Compression and Recursive Application" (McHenry, Zenodo, 2026) — with independent support from peer-reviewed cryptographic research ("ABBA", Imperial College London).
 
 The framework treats governance as a first-class architectural concern — not an afterthought, not a wrapper, not a filter. Governance is the operating system. Agents are workers within it.
 

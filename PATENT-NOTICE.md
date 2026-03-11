@@ -11,7 +11,7 @@ MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is p
 
 ## Academic Publication
 
-The theoretical foundations of MO§ES™ have been published in a preprint preprint extending Shannon's information theory into semantic domains. Independent validation has been noted from a cryptographic paper ("ABBA") from Imperial College London.
+The theoretical foundations of MO§ES™ are published in a preprint: *"A Conservation Law for Commitment in Language Under Transformative Compression and Recursive Application"* (McHenry, Zenodo, 2026). The paper proposes semantic commitment as an invariant under lossy compression and recursive application, with MO§ES™ as the enforcement architecture. The theoretical framework is further supported by independent peer-reviewed cryptographic research ("ABBA", Imperial College London).
 
 ## Trademarks
 

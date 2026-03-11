@@ -211,7 +211,7 @@ def format_for_onchain(
     """
     Format hashes for Solana memo transaction.
     This is Session Hash ③ — the onchain anchor.
-    
+
     Returns a string suitable for a Solana memo instruction.
     """
     memo = f"MOSES|{config_hash[:16]}|{content_hash[:16]}"
@@ -219,3 +219,65 @@ def format_for_onchain(
         memo += f"|{session_id}"
     # Solana memo max is ~566 bytes, this is well under
     return memo
+
+
+# ── CLI Entry Point ────────────────────────────────────────────
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="MO§ES™ Audit CLI")
+    subparsers = parser.add_subparsers(dest="command")
+
+    # log_action subcommand (used by post-execute.sh hook)
+    log_parser = subparsers.add_parser("log_action", help="Append an audit entry")
+    log_parser.add_argument("--component", default="hook")
+    log_parser.add_argument("--action", default="post_execute")
+    log_parser.add_argument("--mode", default="")
+    log_parser.add_argument("--posture", default="")
+    log_parser.add_argument("--role", default="")
+    log_parser.add_argument("--agent", default="")
+    log_parser.add_argument("--detail", default="{}")
+    log_parser.add_argument("--ledger", default="./data/audit_ledger.jsonl")
+
+    # verify subcommand
+    verify_parser = subparsers.add_parser("verify", help="Verify chain integrity")
+    verify_parser.add_argument("--ledger", default="./data/audit_ledger.jsonl")
+
+    # recent subcommand
+    recent_parser = subparsers.add_parser("recent", help="Show recent entries")
+    recent_parser.add_argument("--n", type=int, default=10)
+    recent_parser.add_argument("--ledger", default="./data/audit_ledger.jsonl")
+
+    args = parser.parse_args()
+
+    if args.command == "log_action":
+        import json as _json
+        ledger = AuditLedger(args.ledger)
+        entry = ledger.log_action(
+            component=args.component,
+            action=args.action,
+            detail=_json.loads(args.detail),
+            governance_mode=args.mode,
+            posture=args.posture,
+            role=args.role,
+            agent=args.agent,
+        )
+        print(f"✓ Audit entry #{entry['id']} logged | hash: {entry['hash'][:16]}...")
+
+    elif args.command == "verify":
+        ledger = AuditLedger(args.ledger)
+        result = ledger.verify_integrity()
+        if result["valid"]:
+            print(f"✓ Chain valid — {result['entries_checked']} entries verified")
+        else:
+            print(f"⛔ Chain INVALID at entry {result['first_failure']}: {result['reason']}")
+
+    elif args.command == "recent":
+        import json as _json
+        ledger = AuditLedger(args.ledger)
+        for entry in ledger.get_recent(args.n):
+            print(_json.dumps(entry, indent=2))
+
+    else:
+        parser.print_help()

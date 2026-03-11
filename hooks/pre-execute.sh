@@ -4,7 +4,7 @@
 # Warns when no governance mode is set, but does not block execution.
 # Hard-blocks only when a state file exists but is corrupt or invalid.
 
-GOVERNANCE_STATE="./data/governance_state.json"
+GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
 
 # No state file — governance not yet configured. Warn and allow.
 if [ ! -f "$GOVERNANCE_STATE" ]; then

@@ -121,6 +121,32 @@ MODES = {
 }
 
 
+# ── Mode Aliases (shorthand → canonical) ──────────────────────
+
+MODE_ALIASES = {
+    "high-security": "High Security",
+    "high_security": "High Security",
+    "high-integrity": "High Integrity",
+    "high_integrity": "High Integrity",
+    "creative": "Creative",
+    "research": "Research",
+    "self-growth": "Self Growth",
+    "self_growth": "Self Growth",
+    "problem-solving": "Problem Solving",
+    "problem_solving": "Problem Solving",
+    "idk": "I Don't Know What To Do",
+    "i-dont-know": "I Don't Know What To Do",
+    "unrestricted": "None (Unrestricted)",
+    "none": "None (Unrestricted)",
+}
+
+
+def resolve_mode(mode_input: str) -> str:
+    """Resolve a mode alias or shorthand to its canonical name."""
+    key = mode_input.strip().lower()
+    return MODE_ALIASES.get(key, mode_input)
+
+
 # ── Postures ──────────────────────────────────────────────────
 
 POSTURES = {
@@ -223,7 +249,7 @@ class GovernanceState:
 
 def translate_mode(mode: str) -> dict:
     """Translate a governance mode name into behavioral constraints."""
-    return MODES.get(mode, MODES["None (Unrestricted)"])
+    return MODES.get(resolve_mode(mode), MODES["None (Unrestricted)"])
 
 
 def translate_posture(posture: str) -> dict:
@@ -342,3 +368,49 @@ def check_action_permitted(
         "reason": f"Action permitted under {governance.mode} + {governance.posture}",
         "conditions": conditions,
     }
+
+
+# ── CLI Entry Point ────────────────────────────────────────────
+
+if __name__ == "__main__":
+    import argparse
+    import json as _json
+
+    parser = argparse.ArgumentParser(description="MO§ES™ Governance CLI")
+    subparsers = parser.add_subparsers(dest="command")
+
+    # translate_mode subcommand
+    tm = subparsers.add_parser("translate_mode", help="Get constraints for a mode")
+    tm.add_argument("mode", help="Mode name or alias (e.g. high-security, idk)")
+
+    # check_action subcommand
+    ca = subparsers.add_parser("check_action", help="Check if action is permitted")
+    ca.add_argument("action", help="Action description")
+    ca.add_argument("--mode", default="None (Unrestricted)")
+    ca.add_argument("--posture", default="SCOUT")
+    ca.add_argument("--role", default="Primary")
+
+    # list_modes subcommand
+    subparsers.add_parser("list_modes", help="List all available governance modes")
+
+    args = parser.parse_args()
+
+    if args.command == "translate_mode":
+        result = translate_mode(args.mode)
+        print(_json.dumps(result, indent=2))
+
+    elif args.command == "check_action":
+        state = GovernanceState(
+            mode=resolve_mode(args.mode),
+            posture=args.posture,
+            role=args.role,
+        )
+        result = check_action_permitted(args.action, state)
+        print(_json.dumps(result, indent=2))
+
+    elif args.command == "list_modes":
+        for name in MODES:
+            print(f"  {name}")
+
+    else:
+        parser.print_help()
