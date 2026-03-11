@@ -1,6 +1,6 @@
 {
   "mode": "High Security",
-  "posture": "SCOUT",
+  "posture": "OFFENSE",
   "role": "Primary",
   "reasoning_mode": "Deductive",
   "reasoning_depth": "MODERATE",

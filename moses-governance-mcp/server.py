@@ -2,9 +2,16 @@
 MO§ES™ MCP Governance Server — server.py
 © 2026 Ello Cello LLC — Patent pending: Serial No. 63/877,177
 
-FastMCP server exposing 13 governance, vault, and audit tools.
+FastMCP server exposing 16 governance, vault, and audit tools.
 Transport: stdio (local dev / Claude Code)
 State:     in-memory GovernanceState per session + persistent JSONL audit ledger
+
+Tools (v1.1):
+  Core (13): govern_set_mode, govern_set_posture, govern_set_role,
+             govern_check_action, govern_get_status, govern_assemble_context,
+             vault_load, vault_list, vault_clear,
+             audit_log, audit_verify, audit_recent, audit_hash_session
+  v1.1 (+3): govern_check_commitment, govern_oracle_verify, govern_run_swarm_round
 
 Run:
     python3 server.py
@@ -37,6 +44,17 @@ from governance.audit import (
     hash_conversation,
     format_for_onchain,
 )
+from governance.commitment import evaluate_commitment, score_commitment
+from governance.oracle import grok_verify_sync
+from governance.swarm import run_swarm_round, SwarmConfig
+from governance.meta import (
+    analyze_audit_trail,
+    apply_amendment,
+    list_proposals,
+    get_proposal,
+    reject_proposal,
+    constitution_status,
+)
 
 # ---------------------------------------------------------------------------
 # Server init
@@ -44,7 +62,7 @@ from governance.audit import (
 
 mcp = FastMCP(
     name="moses-governance",
-    version="1.1.0",
+    version="1.2.0",
     instructions="Constitutional governance engine for AI agents — MO§ES™",
 )
 
@@ -399,6 +417,281 @@ def audit_hash_session(messages: list[dict], ctx: Context | None = None) -> dict
         "hash_content": hash_content,
         "hash_onchain": hash_onchain,
     }
+
+
+# ---------------------------------------------------------------------------
+# v1.1 TOOLS — Commitment, Oracle, Swarm
+# ---------------------------------------------------------------------------
+
+@mcp.tool()
+def govern_check_commitment(
+    message: str,
+    history: list[str] | None = None,
+    block_threshold: float = 40.0,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Check semantic commitment drift between a message and conversation history.
+    Based on the 2026 McHenry Conservation Law.
+    Drift < 5% = green (preserved). Drift > threshold = blocked.
+    Returns: {"drift_score": float, "drift_level": str, "commitment_preserved": bool,
+              "reason": str, "conditions": [...], "scorer": str}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+
+    result = evaluate_commitment(message, history=history, block_threshold=block_threshold)
+
+    _get_ledger(session_id).log_action(
+        component="commitment",
+        action="check_commitment",
+        detail={
+            "drift_score": result["drift_score"],
+            "drift_level": result["drift_level"],
+            "commitment_preserved": result["commitment_preserved"],
+        },
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
+
+
+@mcp.tool()
+def govern_oracle_verify(
+    message: str,
+    context: str = "",
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Send message to Grok Oracle for independent commitment verification.
+    Falls back gracefully if XAI_GROK_API_KEY is not set.
+    Returns: {"preserves_commitment": bool, "explanation": str, "source": str}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+
+    result = grok_verify_sync(
+        message=message,
+        context=context or f"Governance mode: {gs.mode} | Posture: {gs.posture} | Role: {gs.role}",
+    )
+
+    _get_ledger(session_id).log_action(
+        component="oracle",
+        action="oracle_verify",
+        detail={
+            "preserves_commitment": result["preserves_commitment"],
+            "source": result["source"],
+        },
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
+
+
+@mcp.tool()
+def govern_run_swarm_round(
+    task: str,
+    primary_output: str = "",
+    secondary_output: str = "",
+    history: list[str] | None = None,
+    drift_block_threshold: float = 75.0,
+    use_oracle: bool = False,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Run a full governance-enforced swarm round: Primary → Secondary → Observer.
+    Enforces commitment conservation between steps.
+    Grok Oracle final gate is optional (set use_oracle=True + XAI_GROK_API_KEY).
+
+    Pass primary_output and secondary_output as pre-generated text (from your agents).
+    The server enforces the constitutional checks — commitment scoring, governance
+    pre-flight, oracle gate — and returns the full verdict.
+
+    drift_block_threshold: float (default 75.0) — drift % above which Secondary vetoes.
+    Tune down for stricter sessions (e.g. High Security: 30.0).
+
+    Returns: {"approved": bool, "output": str, "drift_score": float,
+              "commitment_preserved": bool, "oracle": dict, "blocked": bool,
+              "block_reason": str | None, "steps": [...]}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+
+    # Build role handlers from provided outputs (or placeholder stubs)
+    def make_handler(output: str):
+        def handler(role: str, input_text: str) -> str:
+            if output:
+                return output
+            raise NotImplementedError(f"No output provided for {role}")
+        return handler
+
+    role_handlers = {
+        "Primary": make_handler(primary_output),
+        "Secondary": make_handler(secondary_output),
+        "Observer": make_handler(""),  # Observer always uses placeholder — flags from full context
+    }
+
+    cfg = SwarmConfig(
+        drift_block_threshold=drift_block_threshold,
+        use_oracle=use_oracle,
+    )
+
+    result = run_swarm_round(
+        task=task,
+        governance=gs,
+        role_handlers=role_handlers,
+        history=history,
+        config=cfg,
+    )
+
+    _get_ledger(session_id).log_action(
+        component="swarm",
+        action="swarm_round",
+        detail={
+            "task_len": len(task),
+            "approved": result["approved"],
+            "blocked": result["blocked"],
+            "drift_score": result["drift_score"],
+            "block_reason": result.get("block_reason"),
+        },
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
+
+
+# ---------------------------------------------------------------------------
+# v1.2 TOOLS — Meta-Governance / Constitutional Amendment Protocol
+# ---------------------------------------------------------------------------
+
+@mcp.tool()
+def meta_analyze_trail(
+    timeframe: str = "week",
+    focus: list[str] | None = None,
+    min_confidence: float = 0.8,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Analyze the audit trail and generate constitutional amendment proposals.
+    The constitution reads its own history and proposes improvements.
+
+    timeframe: "day" | "week" | "month" | "all"
+    focus:     ["modes", "postures", "roles"] — which dimensions to analyze
+    min_confidence: 0.0–1.0 — minimum confidence to emit a proposal
+
+    Returns: {"proposals": [...], "entries_analyzed": int, "analysis_summary": str}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+    focus = focus or ["modes", "postures", "roles"]
+
+    result = analyze_audit_trail(
+        timeframe=timeframe,
+        focus=focus,
+        min_confidence=min_confidence,
+        ledger_name=f"audit_{session_id}.jsonl",
+    )
+
+    _get_ledger(session_id).log_action(
+        component="meta",
+        action="analyze_trail",
+        detail={
+            "timeframe": timeframe,
+            "entries_analyzed": result["entries_analyzed"],
+            "proposals_generated": len(result["proposals"]),
+        },
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
+
+
+@mcp.tool()
+def meta_list_proposals(status: str = "pending", ctx: Context | None = None) -> dict:
+    """
+    List constitutional amendment proposals by status.
+    status: "pending" | "approved" | "rejected"
+
+    Returns: {"proposals": [...], "count": int, "status": str}
+    """
+    return list_proposals(status)
+
+
+@mcp.tool()
+def meta_apply_amendment(
+    proposal_id: str,
+    operator_signature: str,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Apply a pending amendment to the constitution. Atomic write + cryptographic signing.
+    Requires operator_signature (non-empty string). Bumps constitution version.
+    Moves proposal from pending → approved. Appends to amendments.jsonl.
+
+    Returns: {"success": bool, "new_version": str, "constitution_hash": str, "message": str}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+
+    result = apply_amendment(proposal_id, operator_signature)
+
+    _get_ledger(session_id).log_action(
+        component="meta",
+        action="apply_amendment",
+        detail={
+            "proposal_id": proposal_id,
+            "success": result["success"],
+            "new_version": result.get("new_version"),
+        },
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
+
+
+@mcp.tool()
+def meta_reject_proposal(
+    proposal_id: str,
+    reason: str,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Reject a pending amendment proposal with a reason.
+    Moves proposal from pending → rejected.
+
+    Returns: {"success": bool, "message": str}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+
+    result = reject_proposal(proposal_id, reason)
+
+    _get_ledger(session_id).log_action(
+        component="meta",
+        action="reject_proposal",
+        detail={"proposal_id": proposal_id, "reason": reason, "success": result["success"]},
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
+
+
+@mcp.tool()
+def meta_constitution_status(ctx: Context | None = None) -> dict:
+    """
+    Return full meta-governance status: constitution version, signature,
+    amendment count, proposal counts, and core principles status.
+
+    Returns: {"constitution_version": str, "constitution_signature": str,
+              "amendment_count": int, "proposals": {...}, "core_principles_count": int}
+    """
+    return constitution_status()
 
 
 # ---------------------------------------------------------------------------
