@@ -389,11 +389,18 @@ def _rule_triggered(rule: str, concepts: set[str]) -> bool:
     """
     Check whether a prohibited rule is triggered by the action's concepts.
     Maps rule language to concepts — no hardcoded per-mode logic.
+
+    Rule fires if: action has the concept AND rule text contains that concept's signals.
+
+    Note on execution signals: "execut" is intentionally excluded from rule-text
+    detection. "Executing transactions without confirmation" is a transaction rule —
+    it fires via the transaction concept. Using "execut" caused "run portfolio analysis"
+    (execution concept, no transaction) to false-positive against that rule.
     """
     rule_lower = rule.lower()
     trigger_map = {
         "transaction":       ["transaction", "transfer", "swap", "trade"],
-        "execution":         ["execut", "deploy", "run"],
+        "execution":         ["deploy", "run"],
         "destructive":       ["destructive", "delete", "irreversible", "remov"],
         "approval":          ["approv", "sign", "authoriz"],
         "outbound":          ["outbound", "transfer", "transmit", "send"],

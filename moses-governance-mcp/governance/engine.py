@@ -389,11 +389,18 @@ def _rule_triggered(rule: str, concepts: set[str]) -> bool:
     """
     Check whether a prohibited rule is triggered by the action's concepts.
     Maps rule language to concepts — no hardcoded per-mode logic.
+
+    Rule fires if: action has the concept AND rule text contains that concept's signals.
+
+    Note on execution signals: "execut" is intentionally excluded from rule-text
+    detection. "Executing transactions without confirmation" is a transaction rule —
+    it fires via the transaction concept. Using "execut" caused "run portfolio analysis"
+    (execution concept, no transaction) to false-positive against that rule.
     """
     rule_lower = rule.lower()
     trigger_map = {
         "transaction":       ["transaction", "transfer", "swap", "trade"],
-        "execution":         ["execut", "deploy", "run"],
+        "execution":         ["deploy", "run"],
         "destructive":       ["destructive", "delete", "irreversible", "remov"],
         "approval":          ["approv", "sign", "authoriz"],
         "outbound":          ["outbound", "transfer", "transmit", "send"],
@@ -499,6 +506,30 @@ if __name__ == "__main__":
     # list_modes subcommand
     subparsers.add_parser("list_modes", help="List all available governance modes")
 
+    # set_state subcommand — persists mode/posture/role to governance_state.json
+    ss = subparsers.add_parser("set_state", help="Write governance state to disk")
+    ss.add_argument("--mode", default=None, help="Governance mode alias or canonical name")
+    ss.add_argument("--posture", default=None, help="SCOUT | DEFENSE | OFFENSE")
+    ss.add_argument("--role", default=None, help="Primary | Secondary | Observer")
+    ss.add_argument("--state", default="./data/governance_state.json", help="Path to governance_state.json")
+
+    # vault_load subcommand — adds a document to vault_documents in state file
+    vl = subparsers.add_parser("vault_load", help="Load a document into the active vault")
+    vl.add_argument("name", help="Document name/identifier")
+    vl.add_argument("--category", default="general", help="Document category")
+    vl.add_argument("--content", default="", help="Document content (inline)")
+    vl.add_argument("--file", default=None, help="Path to document file to load")
+    vl.add_argument("--state", default="./data/governance_state.json")
+
+    # vault_unload subcommand — removes a document from vault_documents
+    vu = subparsers.add_parser("vault_unload", help="Remove a document from the active vault")
+    vu.add_argument("name", help="Document name to remove")
+    vu.add_argument("--state", default="./data/governance_state.json")
+
+    # vault_list subcommand — lists currently loaded vault documents
+    vls = subparsers.add_parser("vault_list", help="List loaded vault documents")
+    vls.add_argument("--state", default="./data/governance_state.json")
+
     args = parser.parse_args()
 
     if args.command == "translate_mode":
@@ -528,6 +559,86 @@ if __name__ == "__main__":
     elif args.command == "list_modes":
         for name in MODES:
             print(f"  {name}")
+
+    elif args.command == "set_state":
+        import os as _os
+        state_path = _os.path.expandvars(args.state)
+        # Load existing state or start fresh
+        if _os.path.exists(state_path):
+            with open(state_path) as f:
+                s = _json.load(f)
+        else:
+            s = {"mode": "None (Unrestricted)", "posture": "SCOUT", "role": "Primary", "vault_documents": []}
+        # Apply updates — only fields explicitly passed
+        _role_map = {"primary": "Primary", "secondary": "Secondary", "observer": "Observer"}
+        _posture_map = {"scout": "SCOUT", "defense": "DEFENSE", "offense": "OFFENSE"}
+        if args.mode is not None:
+            s["mode"] = resolve_mode(args.mode)
+        if args.posture is not None:
+            s["posture"] = _posture_map.get(args.posture.lower(), args.posture.upper())
+        if args.role is not None:
+            s["role"] = _role_map.get(args.role.lower(), args.role)
+        if "vault_documents" not in s:
+            s["vault_documents"] = []
+        with open(state_path, "w") as f:
+            _json.dump(s, f, indent=2)
+        print(_json.dumps({"updated": True, "state": {k: v for k, v in s.items() if k != "vault_documents"}}))
+
+    elif args.command == "vault_load":
+        import os as _os
+        state_path = _os.path.expandvars(args.state)
+        if _os.path.exists(state_path):
+            with open(state_path) as f:
+                s = _json.load(f)
+        else:
+            s = {"mode": "None (Unrestricted)", "posture": "SCOUT", "role": "Primary", "vault_documents": []}
+        if "vault_documents" not in s:
+            s["vault_documents"] = []
+        # Read content from file if --file provided, else use --content
+        content = args.content
+        if args.file and _os.path.exists(args.file):
+            with open(args.file, "r", encoding="utf-8") as f:
+                content = f.read()
+        # Remove existing entry with same name before adding
+        s["vault_documents"] = [d for d in s["vault_documents"] if d.get("name") != args.name]
+        s["vault_documents"].append({"name": args.name, "category": args.category, "content": content})
+        with open(state_path, "w") as f:
+            _json.dump(s, f, indent=2)
+        print(_json.dumps({"loaded": args.name, "category": args.category, "vault_count": len(s["vault_documents"])}))
+
+    elif args.command == "vault_unload":
+        import os as _os
+        state_path = _os.path.expandvars(args.state)
+        if _os.path.exists(state_path):
+            with open(state_path) as f:
+                s = _json.load(f)
+        else:
+            print(_json.dumps({"error": "No state file found"}))
+            raise SystemExit(1)
+        before = len(s.get("vault_documents", []))
+        s["vault_documents"] = [d for d in s.get("vault_documents", []) if d.get("name") != args.name]
+        after = len(s["vault_documents"])
+        with open(state_path, "w") as f:
+            _json.dump(s, f, indent=2)
+        if after < before:
+            print(_json.dumps({"unloaded": args.name, "vault_count": after}))
+        else:
+            print(_json.dumps({"error": f"Document '{args.name}' not found in vault"}))
+
+    elif args.command == "vault_list":
+        import os as _os
+        state_path = _os.path.expandvars(args.state)
+        if _os.path.exists(state_path):
+            with open(state_path) as f:
+                s = _json.load(f)
+            docs = s.get("vault_documents", [])
+            if docs:
+                for doc in docs:
+                    print(f"  [{doc.get('category','general')}] {doc.get('name','')}")
+            else:
+                print("  Vault is empty.")
+        else:
+            print("  No governance state file found.")
 
     else:
         parser.print_help()

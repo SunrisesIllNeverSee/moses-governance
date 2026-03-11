@@ -1,7 +1,7 @@
 {
   "name": "moses-governance",
   "version": "1.0.0",
-  "displayName": "MO§ES™ Governance",
+  "displayName": "MO\u00a7ES\u2122 Governance",
   "description": "Constitutional governance framework for Claude. Set behavioral modes, enforce role hierarchy, control posture, inject governance documents, and maintain cryptographic audit trails. Patent-pending (Serial No. 63/877,177). Preprint available.",
   "author": {
     "name": "Ello Cello LLC",
@@ -19,11 +19,10 @@
   "mcpServers": {
     "moses-governance": {
       "command": "python3",
-      "args": ["server.py"],
-      "cwd": "${pluginDir}/moses-governance-mcp",
-      "env": {
-        "MOSES_OPERATOR_SECRET": "${MOSES_OPERATOR_SECRET}"
-      }
+      "args": [
+        "server.py"
+      ],
+      "cwd": "./moses-governance-mcp"
     }
   },
   "keywords": [
