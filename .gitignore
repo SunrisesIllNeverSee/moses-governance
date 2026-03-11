@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.DS_Store
+*.log
+audit-ledger.json
+.env
