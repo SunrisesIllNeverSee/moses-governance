@@ -4,7 +4,7 @@
 
 **MO§ES™** is a constitutional governance framework that gives operators enforceable control over how Claude behaves. Not prompting. Not filtering. Constitutional governance — with modes, hierarchy, postures, and cryptographic audit trails.
 
-**Patent pending.** Serial No. 63/877,177. Preprint published (Zenodo, 2026). [Live demo →](https://mos2es.io)
+**Patent pending.** Serial No. 63/877,177. [Preprint published →](https://zenodo.org/records/18792459) [Live demo →](https://mos2es.io)
 
 ## Install
 
@@ -98,7 +98,7 @@ GitLab governs code. Harvey governs legal. Snowflake governs data. **COMMAND gov
 
 ## About
 
-**MO§ES™** (Modus Operandi System for Signal Encoding and Scaling Expansion) is developed by [Ello Cello LLC](https://mos2es.io). Patent pending. Preprint published (Zenodo, 2026).
+**MO§ES™** (Modus Operandi System for Signal Encoding and Scaling Expansion) is developed by [Ello Cello LLC](https://mos2es.io). Patent pending. [Preprint →](https://zenodo.org/records/18792459)
 
 **COMMAND** is the visual governance console. Live at [mos2es.io](https://mos2es.io).
 

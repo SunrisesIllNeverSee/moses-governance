@@ -11,7 +11,7 @@ MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is p
 
 ## Academic Publication
 
-The theoretical foundations of MO§ES™ are published in a preprint: *"A Conservation Law for Commitment in Language Under Transformative Compression and Recursive Application"* (McHenry, Zenodo, 2026). The paper proposes semantic commitment as an invariant under lossy compression and recursive application, with MO§ES™ as the enforcement architecture. The theoretical framework is further supported by independent peer-reviewed cryptographic research ("ABBA", Imperial College London).
+The theoretical foundations of MO§ES™ are published in a preprint: [*"A Conservation Law for Commitment in Language Under Transformative Compression and Recursive Application"*](https://zenodo.org/records/18792459) (McHenry, Zenodo, 2026). The paper proposes semantic commitment as an invariant under lossy compression and recursive application, with MO§ES™ as the enforcement architecture. The theoretical framework is further supported by independent peer-reviewed cryptographic research ("ABBA", Imperial College London).
 
 ## Trademarks
 
@@ -27,5 +27,5 @@ Unauthorized reproduction, reverse engineering, or commercial use of the governa
 
 ## Contact
 
-contact@burnmydays.com
-https://mos2es.io
+[contact@burnmydays.com](mailto:contact@burnmydays.com)
+[mos2es.io](https://mos2es.io)

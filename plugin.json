@@ -10,6 +10,7 @@
   },
   "homepage": "https://mos2es.io",
   "repository": "https://github.com/SunrisesIllNeverSee/moses-governance",
+  "icon": "./logo.svg",
   "license": "SEE LICENSE.md",
   "skills": "./skills/",
   "commands": "./commands/",
