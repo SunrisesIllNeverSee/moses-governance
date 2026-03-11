@@ -122,7 +122,7 @@ moses-governance/
   "description": "Constitutional governance framework for Claude. Set behavioral modes, enforce role hierarchy, control posture, inject governance documents, and maintain cryptographic audit trails. Patent-pending. Peer-reviewed.",
   "author": {
     "name": "Ello Cello LLC",
-    "email": "burnmydays@proton.me",
+    "email": "contact@burnmydays.com",
     "url": "https://mos2es.io"
   },
   "homepage": "https://mos2es.io",
@@ -514,7 +514,7 @@ Patent pending (Serial No. 63/877,177). Peer-reviewed paper published with indep
 
 **Repository:** https://github.com/[your-handle]/moses-governance
 
-**Author:** Ello Cello LLC (burnmydays@proton.me)
+**Author:** Ello Cello LLC (contact@burnmydays.com)
 
 **License:** Source-available (see LICENSE.md)
 

@@ -27,5 +27,5 @@ Unauthorized reproduction, reverse engineering, or commercial use of the governa
 
 ## Contact
 
-burnmydays@proton.me
+contact@burnmydays.com
 https://mos2es.io

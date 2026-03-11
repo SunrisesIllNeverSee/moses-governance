@@ -102,7 +102,7 @@ GitLab governs code. Harvey governs legal. Snowflake governs data. **COMMAND gov
 
 **COMMAND** is the visual governance console. Live at [mos2es.io](https://mos2es.io).
 
-Contact: burnmydays@proton.me
+Contact: contact@burnmydays.com
 
 ## License
 

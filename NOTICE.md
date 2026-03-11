@@ -4,7 +4,7 @@
 
 **Product:** MO§E§™ Governance — Constitutional Control for Claude
 **Publisher:** Ello Cello LLC
-**Contact:** burnmydays@proton.me
+**Contact:** contact@burnmydays.com
 **Website:** https://mos2es.io
 
 ## Intellectual Property

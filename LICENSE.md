@@ -33,4 +33,4 @@ THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. ELLO CELLO LLC S
 
 ## Contact
 
-For commercial licensing inquiries: burnmydays@proton.me
+For commercial licensing inquiries: contact@burnmydays.com

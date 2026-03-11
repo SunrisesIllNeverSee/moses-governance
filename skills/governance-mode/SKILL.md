@@ -9,7 +9,7 @@ metadata:
   category: "governance"
   patent: "PPA4 Serial No. 63/877,177"
   website: "https://mos2es.io"
-  contact: "burnmydays@proton.me"
+  contact: "contact@burnmydays.com"
 ---
 
 # MO§E§™ Governance — Constitutional Control for AI Agents
@@ -169,4 +169,4 @@ MO§E§™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is 
 The framework treats governance as a first-class architectural concern — not an afterthought, not a wrapper, not a filter. Governance is the operating system. Agents are workers within it.
 
 Learn more: https://mos2es.io
-Contact: burnmydays@proton.me
+Contact: contact@burnmydays.com
