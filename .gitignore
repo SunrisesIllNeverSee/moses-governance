@@ -21,6 +21,7 @@ docs/Plugin-Spec-Compliance-Check.md
 moses-governance-mcp/COWORK-LOG.md
 moses-governance-mcp/MCP-FROM-REVIEWS.md
 moses-governance-mcp/MCP-SERVER-BUILD.md
+moses-governance-mcp/data/proposals/
 .gitignore\ 2
 .claude/
 SKILL.md
