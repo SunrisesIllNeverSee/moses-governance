@@ -23,7 +23,7 @@ if [ ! -f "$GOVERNANCE_STATE" ]; then
 fi
 
 # Validate state file is readable and parse mode
-MODE=$(python3 -c "import json; print(json.load(open('$GOVERNANCE_STATE')).get('mode', ''))" 2>/dev/null)
+MODE=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('mode',''))" "$GOVERNANCE_STATE" 2>/dev/null)
 if [ $? -ne 0 ]; then
     echo "⛔ MO§ES™: Governance state corrupt. Run /govern to reset." >&2
     exit 2

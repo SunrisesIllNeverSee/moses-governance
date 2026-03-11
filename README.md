@@ -87,6 +87,16 @@ Skills are namespaced under the plugin name. When installed, they appear as:
 - [Research Governance](examples/research-governance/) — Methodology-first investigation
 - [Multi-Agent Governance](examples/multi-agent-governance/) — Primary/Secondary/Observer workflow
 
+## Current Limitations
+
+**Conversational enforcement:** The hook system fires on tool use (Bash, Write, Edit) — not on every message. Conversational responses are governed by skill instructions that Claude follows as constitutional directives. A sufficiently insistent operator could argue Claude out of compliance in pure conversation. This is a constraint of the current Claude Code architecture, not a MO§ES™ failure. The MCP server layer moves enforcement into programmatic territory; full pre-response interception requires inference-layer access only Anthropic can provide.
+
+**HMAC operator identity:** Amendment signatures are single-factor on the secret key (`MOSES_OPERATOR_SECRET`). The key is required — nothing amends without it — but proposal-ID binding to a specific operator identity is not yet enforced. A valid signature for one proposal could technically be replayed on another. Operator identity scoping is a v2.0 item. See [Enterprise Use](ENTERPRISE-USE.md) for full security posture.
+
+**Signal-word concept extraction:** `check_action_permitted()` uses keyword matching to detect prohibited concepts. Domain-specific jargon (financial, legal, technical) that doesn't appear in the signal lists may not be caught. The current list covers common vectors and known paraphrase patterns; it is not exhaustive.
+
+These limitations are documented, bounded, and tracked. The self-stress-testing in `Stresstesting/STRESS-TEST-CONCERNS.md` covers every known gap with severity ratings and fix paths.
+
 ## Documentation
 
 - [Architecture](ARCHITECTURE.md) — System design and data flow

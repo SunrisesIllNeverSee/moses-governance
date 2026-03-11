@@ -245,6 +245,7 @@ class GovernanceState:
     communication_pref: str = "Concise"
     goal: str = "Tactical Execution"
     vault_documents: list = field(default_factory=list)
+    agent_name: str = ""
 
 
 def translate_mode(mode: str) -> dict:
