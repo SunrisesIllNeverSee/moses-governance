@@ -53,6 +53,23 @@ Every governed action has been logged with SHA-256 hashes. Full tamper-evident t
 
 Governance is real-time. Change modes mid-session. The audit trail tracks every change.
 
+## MCP Server Setup (Constitutional Amendment Layer)
+
+The MCP server powers the self-amending constitution, commitment conservation, and Grok Oracle. It starts automatically when the plugin is installed. One optional env var unlocks cryptographically signed amendments:
+
+```bash
+export MOSES_OPERATOR_SECRET="your-secret-key-here"
+```
+
+Without it: amendment signatures are advisory (plain string, warned).
+With it: amendments require HMAC-SHA256 — nothing amends the constitution without the key.
+
+Generate a signature for any amendment proposal:
+
+```text
+/govern → then use meta_generate_sig tool in Claude Code MCP panel
+```
+
 ## Learn More
 
 - `/govern` — 8 governance modes
