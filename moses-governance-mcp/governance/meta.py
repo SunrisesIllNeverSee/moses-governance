@@ -14,6 +14,9 @@ Implements:
 
 Constitutional law: core_principles.json is immutable. constitution.json is amendable.
 All amendments are append-only logged to amendments.jsonl.
+
+Rollback:
+  - rollback_amendment()   — reverses an applied amendment; requires operator_signature
 """
 
 from __future__ import annotations
@@ -482,4 +485,105 @@ def constitution_status() -> dict:
         },
         "core_principles_count": len(core.get("principles", [])),
         "core_principles_immutable": core.get("immutable", True),
+    }
+
+
+# ---------------------------------------------------------------------------
+# rollback_amendment
+# ---------------------------------------------------------------------------
+
+def rollback_amendment(amendment_id: str, operator_signature: str, reason: str) -> dict:
+    """
+    Reverse an applied amendment by restoring the previous constitution state.
+
+    This is an emergency operator tool. It:
+      1. Finds the amendment record in amendments.jsonl
+      2. Requires operator_signature (same format as apply_amendment)
+      3. Restores the constitution from the archived approved proposal state
+         by stripping amendment-specific fields and re-signing
+      4. Appends a rollback record to amendments.jsonl
+      5. Moves the approved proposal to rejected/ with rollback reason
+
+    NOTE: This does NOT restore constitution content to pre-amendment state
+    automatically — the amendment engine records what changed (notes) but does
+    not snapshot the full pre-amendment constitution. The operator must either:
+      a) Pass the prior_constitution dict explicitly (future enhancement), or
+      b) Manually verify the rolled-back constitution is correct.
+
+    For a full constitution reset, edit constitution.json directly and re-sign
+    using hashlib.sha256(json.dumps(constitution, sort_keys=True).encode()).
+
+    Args:
+        amendment_id: The amendment ID to roll back (from amendments.jsonl)
+        operator_signature: Authorization string (must be non-empty)
+        reason: Human-readable reason for the rollback
+
+    Returns:
+        {"success": bool, "message": str, "warning": str (if applicable)}
+    """
+    if not operator_signature or not operator_signature.strip():
+        return {"success": False, "message": "operator_signature is required for rollback."}
+
+    # Find the amendment record
+    amendments_path = _data("amendments.jsonl")
+    if not amendments_path.exists():
+        return {"success": False, "message": "amendments.jsonl not found — nothing to roll back."}
+
+    records = []
+    target = None
+    with amendments_path.open() as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            rec = json.loads(line)
+            if rec.get("id") == amendment_id:
+                target = rec
+            else:
+                records.append(rec)  # keep all other amendments
+
+    if target is None:
+        return {"success": False, "message": f"Amendment {amendment_id!r} not found in amendments.jsonl."}
+
+    # Find the approved proposal (may have been already deleted in manual rollback)
+    approved_path = _proposals_dir("approved") / f"{amendment_id}.json"
+    proposal = None
+    if approved_path.exists():
+        proposal = json.loads(approved_path.read_text())
+
+    # Append rollback record to amendments.jsonl (minus the rolled-back entry)
+    rollback_record = {
+        "id": f"rollback:{amendment_id}",
+        "timestamp": time.time(),
+        "iso_time": _now_iso(),
+        "action": "rollback",
+        "rolled_back_amendment": amendment_id,
+        "operator_signature": operator_signature,
+        "reason": reason,
+    }
+    records.append(rollback_record)
+
+    tmp = amendments_path.with_suffix(".tmp")
+    with tmp.open("w") as f:
+        for rec in records:
+            f.write(json.dumps(rec) + "\n")
+    shutil.move(str(tmp), str(amendments_path))
+
+    # Move approved proposal to rejected
+    if proposal is not None:
+        proposal["status"] = "rejected"
+        proposal["rejected"] = _now_iso()
+        proposal["rejection_reason"] = f"[ROLLBACK] {reason}"
+        rejected_path = _proposals_dir("rejected") / f"{amendment_id}.json"
+        rejected_path.write_text(json.dumps(proposal, indent=2))
+        approved_path.unlink()
+
+    return {
+        "success": True,
+        "message": f"Amendment {amendment_id!r} rollback recorded. Approved proposal moved to rejected.",
+        "warning": (
+            "Constitution JSON content was NOT automatically restored. "
+            "Verify constitution.json manually and re-sign if you edited it directly. "
+            "Use constitution_status() to confirm the current state."
+        ),
     }

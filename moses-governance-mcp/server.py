@@ -53,6 +53,7 @@ from governance.meta import (
     list_proposals,
     get_proposal,
     reject_proposal,
+    rollback_amendment,
     constitution_status,
 )
 
@@ -692,6 +693,52 @@ def meta_constitution_status(ctx: Context | None = None) -> dict:
               "amendment_count": int, "proposals": {...}, "core_principles_count": int}
     """
     return constitution_status()
+
+
+@mcp.tool()
+def meta_rollback_amendment(
+    amendment_id: str,
+    operator_signature: str,
+    reason: str,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Emergency operator tool: reverse an applied amendment.
+
+    Records a rollback entry in amendments.jsonl, moves the approved proposal
+    to rejected/, and returns a warning reminding the operator to verify that
+    constitution.json content was manually restored to the correct prior state.
+
+    IMPORTANT: This tool does NOT automatically rewrite constitution.json content.
+    The operator must edit constitution.json directly and re-sign it if the
+    amendment modified the document body. Use meta_constitution_status() to
+    confirm state after rollback.
+
+    Args:
+        amendment_id: ID of the amendment to roll back (from amendments.jsonl)
+        operator_signature: Authorization string (non-empty required)
+        reason: Human-readable reason for the rollback
+
+    Returns: {"success": bool, "message": str, "warning": str}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+
+    result = rollback_amendment(amendment_id, operator_signature, reason)
+
+    _get_ledger(session_id).log_action(
+        component="meta",
+        action="rollback_amendment",
+        detail={
+            "amendment_id": amendment_id,
+            "reason": reason,
+            "success": result.get("success"),
+        },
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
 
 
 # ---------------------------------------------------------------------------

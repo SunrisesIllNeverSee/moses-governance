@@ -285,6 +285,49 @@ moses-governance-mcp/
 
 ---
 
+### 2026-03-11T18:05:00Z — CRITICAL: Bad Amendment Reverted
+**Agent:** Claude (Cowork, Session 2)
+**Triggered by:** Reviewer catch during pre-push review
+
+**What happened:**
+During acceptance testing (Session 1), `meta_apply_amendment` was called with proposal `2f59ae4e3d3e` and operator signature `"operator:luthen:sig:2026-03-11"`. This amended `constitution.json` from v1.0.0 → v1.0.1, adding:
+
+```json
+"amendment_notes": ["Exception for 'check_action' added by amendment 2f59ae4e3d3e"]
+```
+
+to the High Security mode block.
+
+**Why this was wrong:**
+The `amendment_notes` key is documentary only — `check_action_permitted()` enforcement logic is unaffected — but the constitution contained a falsehood: it claimed a `check_action` exception existed when no such exception was in code. The proposal was generated from adversarial test sessions, not real operator frustration. High block rates during testing confirm the posture works.
+
+**Rollback actions taken:**
+1. `constitution.json` restored to v1.0.0 — `amendment_notes` removed, version reset, new SHA-256 signature: `sha256:0db8fa87e8679823aef549a1708f2cca22e9b4500ef5a9cff347ffd28e3198ba`
+2. `data/amendments.jsonl` — cleared (single entry was the bad amendment)
+3. `data/proposals/approved/2f59ae4e3d3e.json` — removed
+
+**State after rollback:**
+- Constitution: v1.0.0, clean, High Security constraints fully intact
+- Amendments ledger: empty (fresh start for production)
+- Proposals: 0 pending, 0 approved, 3 rejected (all test-data artifacts, correctly rejected)
+
+---
+
+### 2026-03-11T18:05:00Z — SECURITY GAP: Weak Operator Signature Format
+**Severity:** HIGH — must fix before production
+
+**Current format:** `"operator:luthen:sig:2026-03-11"` — plain string, no cryptographic proof.
+
+**Problem:** Any caller who knows the format can forge an operator signature and push constitution amendments. `apply_amendment()` only checks the field is non-empty.
+
+**Required fix (pre-production):** Replace with HMAC-SHA256 keyed against `MOSES_OPERATOR_SECRET` env var. Validate in `apply_amendment()` before writing anything to disk.
+
+**Interim mitigation:** `core_principles_immutable: true` protects the 7 bedrock principles. But `mode_modification` and `posture_modification` amendments can be forced through with a known string.
+
+**Action required:** Claude Code — do not ship `meta_apply_amendment` to production without this fix.
+
+---
+
 ## Notes for Claude Code
 
 - **Transport:** stdio only (v1.1). HTTP transport deferred to v1.2.
