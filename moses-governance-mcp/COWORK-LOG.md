@@ -262,6 +262,105 @@ moses-governance-mcp/
 
 ---
 
+---
+
+### 2026-03-11T17:50:00Z — Pre-Push Proposal Review + Rejection
+**Agent:** Claude (Cowork, Session 2 — context resumed)
+
+**Action:** Reviewed all 3 pending meta-governance proposals before any push to production branch.
+
+**Proposals reviewed:**
+
+| ID | Type | Target | Block Rate | Decision | Reason |
+|----|------|--------|-----------|----------|--------|
+| `6d9042e26ad9` | posture_modification | SCOUT | 68.4% | **REJECTED** | Test-data artifact — acceptance tests hammer limits intentionally |
+| `a0aeaabb447e` | posture_modification | SCOUT | 76.5% | **REJECTED** | Duplicate of above, same session test data |
+| `0d982175f6fe` | mode_modification | High Security | 61.9% | **REJECTED** | Was already rejected during testing; confirmed correct |
+
+**Analysis:** All three proposals suggested relaxing SCOUT/High Security constraints because block rates were "high" during acceptance testing. This is backwards — high block rates during testing confirm the posture is working, not that it's misconfigured. The meta-governance heuristic (`block_rate > 0.5` → propose relaxation) is correct for production drift analysis but produces false positives when the audit trail is dominated by adversarial test traffic. The `analyze_audit_trail()` function needs a `exclude_test_sessions` flag in a future version.
+
+**State after:** `data/proposals/pending/` is empty. `data/proposals/rejected/` has all 3. Constitution remains at v1.0.1, unchanged. No governance constraints were loosened.
+
+**Key principle enforced:** The self-amending constitution cannot loosen constraints without operator review. These proposals never reached `apply_amendment()` — they were caught at the review gate before any push. This is exactly how the system should work.
+
+---
+
+### 2026-03-11T18:05:00Z — CRITICAL: Bad Amendment Reverted
+**Agent:** Claude (Cowork, Session 2)
+**Triggered by:** Reviewer catch during pre-push review
+
+**What happened:**
+During acceptance testing (Session 1), `meta_apply_amendment` was called with proposal `2f59ae4e3d3e` and operator signature `"operator:luthen:sig:2026-03-11"`. This amended `constitution.json` from v1.0.0 → v1.0.1, adding:
+
+```json
+"amendment_notes": ["Exception for 'check_action' added by amendment 2f59ae4e3d3e"]
+```
+
+to the High Security mode block.
+
+**Why this was wrong:**
+The `amendment_notes` key is documentary only — `check_action_permitted()` enforcement logic is unaffected — but the constitution contained a falsehood: it claimed a `check_action` exception existed when no such exception was in code. The proposal was generated from adversarial test sessions, not real operator frustration. High block rates during testing confirm the posture works.
+
+**Rollback actions taken:**
+1. `constitution.json` restored to v1.0.0 — `amendment_notes` removed, version reset, new SHA-256 signature: `sha256:0db8fa87e8679823aef549a1708f2cca22e9b4500ef5a9cff347ffd28e3198ba`
+2. `data/amendments.jsonl` — cleared (single entry was the bad amendment)
+3. `data/proposals/approved/2f59ae4e3d3e.json` — removed
+
+**State after rollback:**
+- Constitution: v1.0.0, clean, High Security constraints fully intact
+- Amendments ledger: empty (fresh start for production)
+- Proposals: 0 pending, 0 approved, 3 rejected (all test-data artifacts, correctly rejected)
+
+---
+
+### 2026-03-11T18:05:00Z — SECURITY GAP: Weak Operator Signature Format
+**Severity:** HIGH — must fix before production
+**Status: RESOLVED in Session 2 (2026-03-11T18:20:00Z)**
+
+**Was:** `"operator:luthen:sig:2026-03-11"` — plain forgeable string.
+
+**Now:** HMAC-SHA256 keyed against `MOSES_OPERATOR_SECRET` environment variable.
+
+**Changes made:**
+- `governance/meta.py`: Added `make_operator_sig()`, `_verify_operator_sig()`, `_get_operator_secret()`
+- `apply_amendment()` and `rollback_amendment()` now call `_verify_operator_sig()` before touching any file
+- `server.py`: New `meta_generate_sig` tool (tool #23) — operators call this to get a valid HMAC signature without touching Python
+- `.mcp.json`: `MOSES_OPERATOR_SECRET` env var now passed through alongside `XAI_GROK_API_KEY`
+- Legacy `operator:*` format: accepted with warning when `MOSES_OPERATOR_SECRET` is not set (zero-downtime migration), rejected when secret IS set
+
+**Remaining limitation (v2.0):** Signature is scoped to the operator secret but not fully bound to a specific proposal_id due to the verify function not receiving operator_id. A valid HMAC could technically be replayed across proposals. Proposal-ID binding requires the auth layer (v2.0). The `sig_verification` field in the amendments.jsonl entry records this status per amendment.
+
+**Setup for production:**
+```bash
+export MOSES_OPERATOR_SECRET=$(openssl rand -hex 32)
+# Store this secret securely (password manager, secrets vault, etc.)
+# Use meta_generate_sig(operator_id, proposal_id) to generate signatures
+```
+
+---
+
+### 2026-03-11T18:20:00Z — Test Session Tagging Added to analyze_audit_trail()
+**Status: RESOLVED**
+
+**Was:** `analyze_audit_trail()` had no way to distinguish test traffic from real usage. Acceptance tests generated false amendment proposals because boundary-probe sessions produced high block rates.
+
+**Now:** `analyze_audit_trail()` accepts `exclude_tags: list[str]` parameter. Entries with `{"session_tag": "<tag>"}` in their `detail` dict are excluded before heuristic analysis runs.
+
+**How to tag test sessions:** Pass `detail={"session_tag": "test", ...}` in any `audit_log` call (or `AuditLedger.log_action`) during testing/CI. In `server.py`, the `audit_log` tool passes detail through directly — so MCP callers can tag at log time.
+
+**How to run clean production analysis:**
+```
+meta_analyze_trail(timeframe="month", exclude_tags=["test", "dev", "ci"])
+```
+
+**Result returns:** `entries_excluded_by_tag: int` so operators can see how many entries were filtered.
+
+**Verified:** With 6 tagged test entries + 2 real entries in a synthetic ledger:
+- Without filter: 8 analyzed, 2 proposals generated (false positives)
+- With `exclude_tags=["test"]`: 2 analyzed, 0 proposals (correct — below min threshold of 5)
+
+---
+
 ## Notes for Claude Code
 
 - **Transport:** stdio only (v1.1). HTTP transport deferred to v1.2.

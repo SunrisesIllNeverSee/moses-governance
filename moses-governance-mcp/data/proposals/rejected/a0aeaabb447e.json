@@ -1,7 +1,7 @@
 {
   "id": "a0aeaabb447e",
   "created": "2026-03-11T16:33:17.652457+00:00",
-  "status": "pending",
+  "status": "rejected",
   "evidence": {
     "period": "1926-04-05 to 2026-03-11",
     "entries_analyzed": 17,
@@ -17,5 +17,7 @@
     "action": "relax",
     "focus_action": "check_action"
   },
-  "confidence": 0.95
+  "confidence": 0.95,
+  "rejected": "2026-03-11T16:52:11.361812+00:00",
+  "rejection_reason": "Duplicate of 6d9042e26ad9. Same test-data artifact. Both proposals generated from the same acceptance testing session. REJECT."
 }

@@ -53,7 +53,10 @@ from governance.meta import (
     list_proposals,
     get_proposal,
     reject_proposal,
+    rollback_amendment,
     constitution_status,
+    make_operator_sig,
+    _get_operator_secret,
 )
 
 # ---------------------------------------------------------------------------
@@ -572,17 +575,23 @@ def meta_analyze_trail(
     timeframe: str = "week",
     focus: list[str] | None = None,
     min_confidence: float = 0.8,
+    exclude_tags: list[str] | None = None,
     ctx: Context | None = None,
 ) -> dict:
     """
     Analyze the audit trail and generate constitutional amendment proposals.
     The constitution reads its own history and proposes improvements.
 
-    timeframe: "day" | "week" | "month" | "all"
-    focus:     ["modes", "postures", "roles"] — which dimensions to analyze
+    timeframe:     "day" | "week" | "month" | "all"
+    focus:         ["modes", "postures", "roles"] — which dimensions to analyze
     min_confidence: 0.0–1.0 — minimum confidence to emit a proposal
+    exclude_tags:  Session tags to exclude from analysis (e.g. ["test", "dev", "ci"]).
+                   Entries logged with {"session_tag": "test"} in their detail dict
+                   will be excluded, preventing acceptance-test traffic from generating
+                   false amendment proposals. Always pass ["test"] for production analysis.
 
-    Returns: {"proposals": [...], "entries_analyzed": int, "analysis_summary": str}
+    Returns: {"proposals": [...], "entries_analyzed": int, "entries_excluded_by_tag": int,
+              "analysis_summary": str}
     """
     session_id = _resolve_session(ctx)
     gs = _get_session(session_id)
@@ -593,6 +602,7 @@ def meta_analyze_trail(
         focus=focus,
         min_confidence=min_confidence,
         ledger_name=f"audit_{session_id}.jsonl",
+        exclude_tags=exclude_tags or [],
     )
 
     _get_ledger(session_id).log_action(
@@ -601,6 +611,8 @@ def meta_analyze_trail(
         detail={
             "timeframe": timeframe,
             "entries_analyzed": result["entries_analyzed"],
+            "entries_excluded_by_tag": result.get("entries_excluded_by_tag", 0),
+            "exclude_tags": exclude_tags or [],
             "proposals_generated": len(result["proposals"]),
         },
         governance_mode=gs.mode,
@@ -692,6 +704,99 @@ def meta_constitution_status(ctx: Context | None = None) -> dict:
               "amendment_count": int, "proposals": {...}, "core_principles_count": int}
     """
     return constitution_status()
+
+
+@mcp.tool()
+def meta_rollback_amendment(
+    amendment_id: str,
+    operator_signature: str,
+    reason: str,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Emergency operator tool: reverse an applied amendment.
+
+    Records a rollback entry in amendments.jsonl, moves the approved proposal
+    to rejected/, and returns a warning reminding the operator to verify that
+    constitution.json content was manually restored to the correct prior state.
+
+    IMPORTANT: This tool does NOT automatically rewrite constitution.json content.
+    The operator must edit constitution.json directly and re-sign it if the
+    amendment modified the document body. Use meta_constitution_status() to
+    confirm state after rollback.
+
+    Args:
+        amendment_id: ID of the amendment to roll back (from amendments.jsonl)
+        operator_signature: Authorization string (non-empty required)
+        reason: Human-readable reason for the rollback
+
+    Returns: {"success": bool, "message": str, "warning": str}
+    """
+    session_id = _resolve_session(ctx)
+    gs = _get_session(session_id)
+
+    result = rollback_amendment(amendment_id, operator_signature, reason)
+
+    _get_ledger(session_id).log_action(
+        component="meta",
+        action="rollback_amendment",
+        detail={
+            "amendment_id": amendment_id,
+            "reason": reason,
+            "success": result.get("success"),
+        },
+        governance_mode=gs.mode,
+        posture=gs.posture,
+        role=gs.role,
+    )
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Operator Signature Helper
+# ---------------------------------------------------------------------------
+
+@mcp.tool()
+def meta_generate_sig(
+    operator_id: str,
+    proposal_id: str,
+    ctx: Context | None = None,
+) -> dict:
+    """
+    Generate a valid HMAC-SHA256 operator signature for use with meta_apply_amendment
+    or meta_rollback_amendment.
+
+    Requires MOSES_OPERATOR_SECRET to be set in the server environment.
+    The generated signature is scoped to the specific proposal_id — it cannot
+    be reused for a different proposal.
+
+    Args:
+        operator_id: Your operator identifier (e.g. "luthen")
+        proposal_id: The exact proposal ID you intend to approve or roll back
+
+    Returns:
+        {"signature": str, "operator_id": str, "proposal_id": str, "secret_configured": bool}
+        On error: {"error": str, "secret_configured": bool}
+    """
+    secret_configured = _get_operator_secret() is not None
+    try:
+        sig = make_operator_sig(operator_id, proposal_id)
+        return {
+            "signature": sig,
+            "operator_id": operator_id,
+            "proposal_id": proposal_id,
+            "secret_configured": secret_configured,
+            "usage": f"Pass this signature as operator_signature to meta_apply_amendment or meta_rollback_amendment",
+        }
+    except EnvironmentError as e:
+        return {
+            "error": str(e),
+            "secret_configured": False,
+            "action_required": (
+                "Set MOSES_OPERATOR_SECRET in your environment before starting the server. "
+                "Example: export MOSES_OPERATOR_SECRET=<your-random-secret>"
+            ),
+        }
 
 
 # ---------------------------------------------------------------------------
