@@ -320,10 +320,10 @@ def check_action_permitted(
             }
 
     # Check mode prohibitions
-    for prohibition in mode_config.get("prohibited", []):
-        # This is a simplified check — real implementation would use
-        # semantic matching against the action description
-        pass
+    # v1.0: Posture and High Security keyword checks (below) cover primary
+    # enforcement. Semantic matching of action_description against
+    # mode_config["prohibited"] entries is planned for v1.1 when the
+    # COMMAND backend provides structured action classification.
 
     # Check DEFENSE confirmation requirements
     conditions = []
