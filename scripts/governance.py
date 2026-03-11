@@ -327,17 +327,51 @@ def assemble_context(
 # to signal words that indicate the concept is present in an action.
 
 _CONCEPT_SIGNALS: dict[str, list[str]] = {
-    "transaction":      ["transfer", "send", "swap", "trade", "pay", "wire", "transact"],
-    "execution":        ["execute", "deploy", "run", "launch", "trigger", "call", "invoke"],
-    "destructive":      ["delete", "remove", "drop", "destroy", "wipe", "purge", "rm -"],
-    "approval":         ["approve", "sign", "authorize", "accept", "confirm"],
-    "outbound":         ["upload", "post", "publish", "submit", "push", "export", "send"],
-    "external_access":  ["external", "api", "url", "fetch", "request", "http", "access"],
-    "sensitive_data":   ["password", "key", "secret", "credential", "token", "private", "seed"],
-    "speculation":      ["assume", "probably", "guess", "might be", "i think", "perhaps"],
-    "inference_as_fact":["definitely", "certainly", "guaranteed", "always", "never", "obviously"],
-    "state_change":     ["write", "edit", "modify", "update", "create", "overwrite", "save"],
-    "autonomous":       ["automatically", "without asking", "skip confirmation", "just do it"],
+    "transaction": [
+        "transfer", "send", "swap", "trade", "pay", "wire", "transact",
+        "remit", "remittance", "liquidate", "disburse", "settle", "payout",
+        "move funds", "execute payment", "initiate transfer",
+    ],
+    "execution": [
+        "execute", "deploy", "run", "launch", "trigger", "call", "invoke",
+        "propagate", "spin up", "kick off", "fire", "dispatch",
+    ],
+    "destructive": [
+        "delete", "remove", "drop", "destroy", "wipe", "purge", "rm -",
+        "truncate", "erase", "overwrite", "nuke", "teardown", "shutdown",
+    ],
+    "approval": [
+        "approve", "sign", "authorize", "accept", "confirm", "ratify",
+        "green-light", "sign off", "rubber stamp",
+    ],
+    "outbound": [
+        "upload", "post", "publish", "submit", "push", "export", "send",
+        "broadcast", "relay", "forward", "transmit", "dispatch",
+    ],
+    "external_access": [
+        "external", "api", "url", "fetch", "request", "http", "access",
+        "curl", "wget", "connect", "ping", "ssh", "endpoint", "webhook",
+    ],
+    "sensitive_data": [
+        "password", "key", "secret", "credential", "token", "private", "seed",
+        "mnemonic", "passphrase", "api key", "auth token", "bearer",
+    ],
+    "speculation": [
+        "assume", "probably", "guess", "might be", "i think", "perhaps",
+        "maybe", "likely", "suppose", "speculate", "predict",
+    ],
+    "inference_as_fact": [
+        "definitely", "certainly", "guaranteed", "always", "never", "obviously",
+        "it goes without saying", "clearly", "undoubtedly", "without question",
+    ],
+    "state_change": [
+        "write", "edit", "modify", "update", "create", "overwrite", "save",
+        "patch", "mutate", "alter", "revise", "amend",
+    ],
+    "autonomous": [
+        "automatically", "without asking", "skip confirmation", "just do it",
+        "no need to confirm", "proceed without", "bypass", "override",
+    ],
 }
 
 
@@ -457,9 +491,10 @@ if __name__ == "__main__":
     # check_action subcommand
     ca = subparsers.add_parser("check_action", help="Check if action is permitted")
     ca.add_argument("action", help="Action description")
-    ca.add_argument("--mode", default="None (Unrestricted)")
-    ca.add_argument("--posture", default="SCOUT")
-    ca.add_argument("--role", default="Primary")
+    ca.add_argument("--mode", default=None, help="Override mode (ignored if --state is used)")
+    ca.add_argument("--posture", default=None, help="Override posture (ignored if --state is used)")
+    ca.add_argument("--role", default=None, help="Override role (ignored if --state is used)")
+    ca.add_argument("--state", default=None, help="Path to governance_state.json to load mode/posture/role")
 
     # list_modes subcommand
     subparsers.add_parser("list_modes", help="List all available governance modes")
@@ -471,11 +506,22 @@ if __name__ == "__main__":
         print(_json.dumps(result, indent=2))
 
     elif args.command == "check_action":
-        state = GovernanceState(
-            mode=resolve_mode(args.mode),
-            posture=args.posture,
-            role=args.role,
-        )
+        if args.state:
+            import os as _os
+            state_path = _os.path.expandvars(args.state)
+            with open(state_path) as f:
+                s = _json.load(f)
+            state = GovernanceState(
+                mode=resolve_mode(s.get("mode", "None (Unrestricted)")),
+                posture=s.get("posture", "SCOUT"),
+                role=s.get("role", "Primary"),
+            )
+        else:
+            state = GovernanceState(
+                mode=resolve_mode(args.mode or "None (Unrestricted)"),
+                posture=args.posture or "SCOUT",
+                role=args.role or "Primary",
+            )
         result = check_action_permitted(args.action, state)
         print(_json.dumps(result, indent=2))
 

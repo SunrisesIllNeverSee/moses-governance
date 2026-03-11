@@ -29,7 +29,13 @@ claude --plugin-dir ./moses-governance
 /audit                    # View audit trail
 ```
 
-See [QUICKSTART.md](docs/QUICKSTART.md) for the full 5-minute guide.
+## Enforcement Architecture
+
+**v1.0 (current):** Governance is enforced at the tool-use layer. Every Bash command, file write, and file edit is evaluated against the active governance mode before execution — prohibited actions are blocked. Every user prompt injects the active governance context. Every response and tool action is logged to the cryptographic audit trail.
+
+Conversational responses (Claude generating text without invoking a tool) are governed by skill instructions, which Claude follows as constitutional directives. Full technical interception of conversational output is planned for v1.1 via the standalone MCP server.
+
+**v1.1 (planned):** Standalone FastMCP server acts as external enforcement daemon — every action, including conversational responses, passes through the governance engine before reaching the user.
 
 ## What You Get
 
@@ -85,10 +91,9 @@ Skills are namespaced under the plugin name. When installed, they appear as:
 
 ## Documentation
 
-- [Quickstart](docs/QUICKSTART.md) — 5-minute setup
-- [Architecture](docs/ARCHITECTURE.md) — System design and data flow
-- [Enterprise Use](docs/ENTERPRISE-USE.md) — Deployment patterns for teams
-- [Patent Notice](docs/PATENT-NOTICE.md) — IP and patent status
+- [Architecture](ARCHITECTURE.md) — System design and data flow
+- [Patent Notice](PATENT-NOTICE.md) — IP and patent status
+- [Notice](NOTICE.md) — Preprint citation and validation
 
 ## Why This Exists
 
