@@ -1,0 +1,31 @@
+{
+  "name": "moses-governance",
+  "version": "1.1.0",
+  "description": "Constitutional governance engine for AI agents. Enforces behavioral modes, role hierarchy, posture controls, and cryptographic audit trails.",
+  "vendor": "Ello Cello LLC",
+  "homepage": "https://mos2es.io",
+  "repository": "https://github.com/SunrisesIllNeverSee/moses-governance-mcp",
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false
+  },
+  "tools": [
+    "govern_set_mode",
+    "govern_set_posture",
+    "govern_set_role",
+    "govern_check_action",
+    "govern_get_status",
+    "govern_assemble_context",
+    "vault_load",
+    "vault_list",
+    "vault_clear",
+    "audit_log",
+    "audit_verify",
+    "audit_recent",
+    "audit_hash_session"
+  ],
+  "categories": ["governance", "enterprise", "security", "audit"],
+  "license": "Proprietary",
+  "contact": "contact@burnmydays.com"
+}

@@ -22,8 +22,40 @@ Set the operational posture to "$ARGUMENTS". If no argument provided, show the c
 /posture                 # shows current posture
 ```
 
+## Behavior
+
+When invoked with a posture argument, execute these steps in order:
+
+**Step 1 — Persist the posture** (wires hook enforcement — do not skip):
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" set_state \
+  --posture "$ARGUMENTS" \
+  --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
+```
+
+**Step 2 — Log to audit trail**:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
+  --component "governance" \
+  --action "posture_change" \
+  --posture "$ARGUMENTS" \
+  --ledger "${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
+```
+
+**Step 3 — Confirm to operator**:
+
+```
+✓ Posture set: [POSTURE]
+Transaction policy: [policy from postures.md]
+Hook enforcement active. Audit entry logged.
+```
+
+When invoked with no argument, read `governance_state.json` and display current posture + its transaction policy.
+
 ## Interaction with Governance Mode
 
-Posture and governance mode combine. High Security + SCOUT = maximum caution, read-only, every data point verified. Creative + OFFENSE = experimental execution, audited. The mode sets the rules. The posture sets the throttle.
+The mode sets the rules. The posture sets the throttle. High Security + SCOUT = maximum caution, read-only. Creative + OFFENSE = experimental execution, fully audited.
 
 See `references/postures.md` for full constraint definitions.

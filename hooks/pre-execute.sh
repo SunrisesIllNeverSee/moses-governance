@@ -7,6 +7,15 @@
 
 GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
 
+# Whitelist governance system commands — always allow, never self-block.
+# These are internal MO§ES™ operations (set_state, vault_load, audit log_action).
+# Blocking them would prevent governance from functioning at all.
+_ACTION_PREVIEW="${CLAUDE_TOOL_INPUT:-}"
+if echo "$_ACTION_PREVIEW" | grep -qE "(governance\.py|audit\.py).*(set_state|vault_load|vault_unload|vault_list|log_action)"; then
+    echo "✓ MO§ES™: Governance system command — exempt"
+    exit 0
+fi
+
 # No state file — governance not yet configured. Warn and allow.
 if [ ! -f "$GOVERNANCE_STATE" ]; then
     echo "⚠ MO§ES™: No governance mode set. Use /govern to activate."
