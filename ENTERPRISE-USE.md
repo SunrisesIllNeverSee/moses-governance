@@ -1,10 +1,10 @@
-# Enterprise Use — MO§E§™ Governance
+# Enterprise Use — MO§ES™ Governance
 
 ## Why Enterprise Teams Need This
 
 Every enterprise using Claude today has the same problem: no governance layer between operators and the model. Individual users set their own behavior expectations via prompting. There's no organizational standard, no audit trail, no enforced compliance.
 
-MO§E§™ solves this at the framework level.
+MO§ES™ solves this at the framework level.
 
 ## Deployment Patterns
 

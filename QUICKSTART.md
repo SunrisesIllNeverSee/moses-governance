@@ -1,4 +1,4 @@
-# Quickstart — MO§E§™ Governance in 5 Minutes
+# Quickstart — MO§ES™ Governance in 5 Minutes
 
 ## Install
 

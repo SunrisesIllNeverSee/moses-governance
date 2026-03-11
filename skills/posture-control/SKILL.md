@@ -1,7 +1,7 @@
 ---
 name: posture-control
 description: "Enforces SCOUT/DEFENSE/OFFENSE posture on transactions and state-changing operations. Auto-activates when Claude is asked to execute transactions, modify files, call APIs, deploy code, or perform any action with external effects. Use when: any execution, transaction, file modification, API call, or state change is requested."
-origin: MO§E§™
+origin: MO§ES™
 ---
 
 # Posture Control Enforcement

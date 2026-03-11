@@ -1,5 +1,5 @@
 ---
-description: Set the active MO§E§™ governance mode. Controls behavioral constraints for all subsequent Claude actions.
+description: Set the active MO§ES™ governance mode. Controls behavioral constraints for all subsequent Claude actions.
 argument-hint: [high-security|high-integrity|creative|research|self-growth|problem-solving|idk|unrestricted]
 ---
 

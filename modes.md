@@ -1,4 +1,4 @@
-# MO§E§™ Governance Modes — Reference
+# MO§ES™ Governance Modes — Reference
 
 ## High Security
 **Priority:** Security first.

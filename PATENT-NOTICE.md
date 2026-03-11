@@ -2,7 +2,7 @@
 
 ## Patent Status
 
-MO§E§™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is protected under provisional patent application:
+MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is protected under provisional patent application:
 
 - **Filing:** PPA4
 - **Serial Number:** 63/877,177
@@ -11,11 +11,11 @@ MO§E§™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is 
 
 ## Academic Publication
 
-The theoretical foundations of MO§E§™ have been published in a peer-reviewed preprint extending Shannon's information theory into semantic domains. Independent validation has been noted from a cryptographic paper ("ABBA") from Imperial College London.
+The theoretical foundations of MO§ES™ have been published in a preprint preprint extending Shannon's information theory into semantic domains. Independent validation has been noted from a cryptographic paper ("ABBA") from Imperial College London.
 
 ## Trademarks
 
-- MO§E§™ is a trademark of Ello Cello LLC
+- MO§ES™ is a trademark of Ello Cello LLC
 - COMMAND is a product name of Ello Cello LLC
 - KA§§A is a product name of Ello Cello LLC
 

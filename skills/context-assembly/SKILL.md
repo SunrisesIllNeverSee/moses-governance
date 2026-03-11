@@ -1,12 +1,12 @@
 ---
 name: context-assembly
-description: "Core MO§E§™ engine. Assembles the full governed context payload from active mode + posture + role + vault documents + user profile + conversation history. This is the constitutional intelligence layer. Use when: any governed interaction is occurring, any agent reads context, any response is being generated under governance."
-origin: MO§E§™
+description: "Core MO§ES™ engine. Assembles the full governed context payload from active mode + posture + role + vault documents + user profile + conversation history. This is the constitutional intelligence layer. Use when: any governed interaction is occurring, any agent reads context, any response is being generated under governance."
+origin: MO§ES™
 ---
 
 # Context Assembly — The Core
 
-This is the central intelligence of MO§E§™. Every other skill feeds into this one.
+This is the central intelligence of MO§ES™. Every other skill feeds into this one.
 
 ## What It Does
 

@@ -1,6 +1,6 @@
 # Claude Code Plugin — Submission Checklist
 
-**Plugin**: MO§E§™ Governance Framework for Claude Code
+**Plugin**: MO§ES™ Governance Framework for Claude Code
 **Pitch**: "The only governance framework in the Claude ecosystem. COMMAND governs Claude."
 
 ---
@@ -101,7 +101,7 @@ moses-governance/
 ```bash
 git init
 git add .
-git commit -m "Initial release: MO§E§™ Governance Plugin v1.0"
+git commit -m "Initial release: MO§ES™ Governance Plugin v1.0"
 git remote add origin https://github.com/[username]/moses-governance
 git push -u origin main
 ```

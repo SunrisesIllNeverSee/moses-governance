@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "MO§E§™ Governed Context Payload",
-  "description": "The complete governed payload delivered to agents on every read. This is what makes MO§E§™ different from raw chat — agents receive constitutional orders, not just messages.",
+  "title": "MO§ES™ Governed Context Payload",
+  "description": "The complete governed payload delivered to agents on every read. This is what makes MO§ES™ different from raw chat — agents receive constitutional orders, not just messages.",
   "type": "object",
   "properties": {
     "constitutional_governance": {

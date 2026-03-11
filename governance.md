@@ -1,4 +1,4 @@
-# MO§E§™ Governance Rules
+# MO§ES™ Governance Rules
 
 ## Constitutional Rules (ALWAYS FOLLOW)
 

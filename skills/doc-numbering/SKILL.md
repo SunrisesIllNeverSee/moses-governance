@@ -1,12 +1,12 @@
 ---
 name: doc-numbering
 description: "Applies sequential document numbering, timestamps, topic tags, and cross-references to every document created in a session. Auto-activates whenever a new document, file, report, or artifact is created. Maintains a session TOC and enables traceability across all outputs."
-origin: MO§E§™
+origin: MO§ES™
 ---
 
 # Document Numbering — Session Traceability
 
-Every document created under MO§E§™ governance receives a sequential identifier, timestamp, and topic tag. This creates a traceable index of everything produced in a session.
+Every document created under MO§ES™ governance receives a sequential identifier, timestamp, and topic tag. This creates a traceable index of everything produced in a session.
 
 ## Format
 

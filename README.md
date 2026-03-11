@@ -1,8 +1,8 @@
-# MO§E§™ Governance — Constitutional Control for Claude
+# MO§ES™ Governance — Constitutional Control for Claude
 
-> Every AI agent operates without constraints. No behavioral rules. No audit trail. No chain of command. MO§E§™ changes that.
+> Every AI agent operates without constraints. No behavioral rules. No audit trail. No chain of command. MO§ES™ changes that.
 
-**MO§E§™** is a constitutional governance framework that gives operators enforceable control over how Claude behaves. Not prompting. Not filtering. Constitutional governance — with modes, hierarchy, postures, and cryptographic audit trails.
+**MO§ES™** is a constitutional governance framework that gives operators enforceable control over how Claude behaves. Not prompting. Not filtering. Constitutional governance — with modes, hierarchy, postures, and cryptographic audit trails.
 
 **Patent pending.** Serial No. 63/877,177. Peer-reviewed. [Live demo →](https://mos2es.io)
 
@@ -12,7 +12,7 @@
 # From the official marketplace (after acceptance)
 /plugin install moses-governance@claude-plugin-directory
 
-# From the MO§E§™ marketplace directly
+# From the MO§ES™ marketplace directly
 /plugin marketplace add sunrisesillneversee/moses-governance
 
 # Or test locally during development
@@ -98,7 +98,7 @@ GitLab governs code. Harvey governs legal. Snowflake governs data. **COMMAND gov
 
 ## About
 
-**MO§E§™** (Modus Operandi System for Signal Encoding and Scaling Expansion) is developed by [Ello Cello LLC](https://mos2es.io). Patent pending. Peer-reviewed.
+**MO§ES™** (Modus Operandi System for Signal Encoding and Scaling Expansion) is developed by [Ello Cello LLC](https://mos2es.io). Patent pending. Peer-reviewed.
 
 **COMMAND** is the visual governance console. Live at [mos2es.io](https://mos2es.io).
 

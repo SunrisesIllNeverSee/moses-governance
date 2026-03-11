@@ -1,12 +1,12 @@
 ---
 name: role-hierarchy
 description: "Enforces Primary/Secondary/Observer sequence ordering in multi-agent workflows. Auto-activates when multiple agents or Claude instances are coordinating, when a role is set via /role, or when any agent response depends on another. Ensures no agent responds out of constitutional turn order."
-origin: MO§E§™
+origin: MO§ES™
 ---
 
 # Role Hierarchy Enforcement
 
-This skill enforces the constitutional chain of command in multi-agent MO§E§™ workflows.
+This skill enforces the constitutional chain of command in multi-agent MO§ES™ workflows.
 
 ## Sequence Rule
 

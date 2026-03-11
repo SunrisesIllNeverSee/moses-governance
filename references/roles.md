@@ -1,4 +1,4 @@
-# MO§E§™ Role Hierarchy — Reference
+# MO§ES™ Role Hierarchy — Reference
 
 ## Primary
 **Authority:** Initiates analysis, sets direction.

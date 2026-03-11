@@ -8,7 +8,7 @@ Current plugins in the directory are mostly developer tools — code review, tes
 
 ## THE OVERSHOOT
 
-We're not submitting a skill. We're submitting a full Claude Code Plugin — the most comprehensive governance system anyone has brought to the Claude ecosystem, backed by patent filings, a peer-reviewed paper, and a live deployed console.
+We're not submitting a skill. We're submitting a full Claude Code Plugin — the most comprehensive governance system anyone has brought to the Claude ecosystem, backed by patent filings, a preprint, and a live deployed console.
 
 The submission will be so thorough that reviewing it is easier than rejecting it.
 
@@ -118,7 +118,7 @@ moses-governance/
 {
   "name": "moses-governance",
   "version": "1.0.0",
-  "displayName": "MO§E§™ Governance",
+  "displayName": "MO§ES™ Governance",
   "description": "Constitutional governance framework for Claude. Set behavioral modes, enforce role hierarchy, control posture, inject governance documents, and maintain cryptographic audit trails. Patent-pending. Peer-reviewed.",
   "author": {
     "name": "Ello Cello LLC",
@@ -158,7 +158,7 @@ Every governance control becomes a slash command. Users type it, Claude executes
 ```markdown
 ---
 name: govern
-description: Set the active MO§E§™ governance mode. Controls behavioral constraints for all subsequent actions.
+description: Set the active MO§ES™ governance mode. Controls behavioral constraints for all subsequent actions.
 ---
 
 # /govern [mode]
@@ -340,10 +340,10 @@ Agent definitions let Claude Code spawn governed sub-agents with predetermined r
 ```markdown
 ---
 name: primary-agent
-description: Primary governance agent. Leads analysis under MO§E§™ constitutional control.
+description: Primary governance agent. Leads analysis under MO§ES™ constitutional control.
 ---
 
-You are the Primary agent operating under MO§E§™ governance.
+You are the Primary agent operating under MO§ES™ governance.
 
 Your role:
 - Lead all analysis and set the analytical direction
@@ -367,7 +367,7 @@ name: secondary-agent
 description: Secondary governance agent. Validates and extends Primary's analysis.
 ---
 
-You are the Secondary agent operating under MO§E§™ governance.
+You are the Secondary agent operating under MO§ES™ governance.
 
 Your role:
 - Wait for Primary to respond before generating your output
@@ -387,7 +387,7 @@ name: observer-agent
 description: Observer governance agent. Oversight role — flags risks, does not initiate.
 ---
 
-You are the Observer agent operating under MO§E§™ governance.
+You are the Observer agent operating under MO§ES™ governance.
 
 Your role:
 - Read all responses from Primary and Secondary
@@ -406,7 +406,7 @@ Your role:
 ```yaml
 ---
 name: governance-mode
-description: "Enforces the active MO§E§™ governance mode on all Claude actions. Auto-activates on every task. Checks mode constraints before proceeding, blocks prohibited actions, and logs all governance decisions."
+description: "Enforces the active MO§ES™ governance mode on all Claude actions. Auto-activates on every task. Checks mode constraints before proceeding, blocks prohibited actions, and logs all governance decisions."
 ---
 ```
 
@@ -446,7 +446,7 @@ Activates on execution. Checks posture policy. Blocks or confirms as required.
 ```yaml
 ---
 name: context-assembly
-description: "Core MO§E§™ engine. Assembles the full governed context payload from active mode + posture + role + vault documents + user profile + conversation history. This is the central intelligence layer that transforms raw context into constitutional governance."
+description: "Core MO§ES™ engine. Assembles the full governed context payload from active mode + posture + role + vault documents + user profile + conversation history. This is the central intelligence layer that transforms raw context into constitutional governance."
 ---
 ```
 
@@ -490,18 +490,18 @@ The external plugin submission is at `clau.de/plugin-directory-submission`. Here
 
 **Plugin name:** moses-governance
 
-**Display name:** MO§E§™ Governance — Constitutional Control for Claude
+**Display name:** MO§ES™ Governance — Constitutional Control for Claude
 
 **One-liner:** The only governance framework for AI agents — behavioral modes, role hierarchy, posture controls, and cryptographic audit trails. Patent-pending. Peer-reviewed.
 
 **Description:**
-MO§E§™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is a constitutional governance framework that transforms how Claude operates. Instead of prompting Claude with instructions that can be ignored, MO§E§™ enforces behavioral constraints through governance modes, role hierarchy, posture controls, and cryptographic audit trails.
+MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is a constitutional governance framework that transforms how Claude operates. Instead of prompting Claude with instructions that can be ignored, MO§ES™ enforces behavioral constraints through governance modes, role hierarchy, posture controls, and cryptographic audit trails.
 
 8 governance modes translate to specific behavioral constraints (High Security requires verification before transactions; Research requires documented methodology; Creative allows speculation but logs reasoning). 3 postures control transaction policy (SCOUT = read-only, DEFENSE = protect capital, OFFENSE = execute within constraints). 3 roles enforce hierarchy in multi-agent workflows (Primary leads, Secondary validates, Observer oversees).
 
 Every action is logged to a SHA-256 hash chain — tamper-evident, append-only, verifiable. Session integrity hashes can be anchored onchain for immutable proof.
 
-Patent pending (Serial No. 63/877,177). Peer-reviewed paper published with independent validation. Live demo at mos2es.io.
+Patent pending (Serial No. 63/877,177). Preprint published with independent validation. Live demo at mos2es.io.
 
 **Category:** Enterprise & Communication
 
@@ -550,7 +550,7 @@ Patent pending (Serial No. 63/877,177). Peer-reviewed paper published with indep
 Two simultaneous submissions. Same IP. Two ecosystems. Two revenue paths.
 
 ```
-MO§E§™ Framework
+MO§ES™ Framework
 ├── Bags Hackathon → KA§§A marketplace + governance skill for Solana agents
 │   ├── $10K-$100K grant potential
 │   ├── Onchain revenue via fee sharing
@@ -567,7 +567,7 @@ The Claude submission proves the IP works everywhere.
 
 Both point back to mos2es.io. Both point back to the patent. Both point back to you.
 
-And when Anthropic reviews the plugin submission and sees patent filings, a peer-reviewed paper, a live demo, a complete plugin with 8 slash commands and 5 skills and 3 agents and crypto audit trails and enterprise documentation...
+And when Anthropic reviews the plugin submission and sees patent filings, a preprint, a live demo, a complete plugin with 8 slash commands and 5 skills and 3 agents and crypto audit trails and enterprise documentation...
 
 They don't have a reason to say no. They have a category they didn't know they needed.
 

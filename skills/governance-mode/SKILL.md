@@ -12,9 +12,9 @@ metadata:
   contact: "contact@burnmydays.com"
 ---
 
-# MO§E§™ Governance — Constitutional Control for AI Agents
+# MO§ES™ Governance — Constitutional Control for AI Agents
 
-Every AI agent operating today executes without constraints. No behavioral rules. No audit trail. No chain of command. MO§E§™ changes that.
+Every AI agent operating today executes without constraints. No behavioral rules. No audit trail. No chain of command. MO§ES™ changes that.
 
 This skill wraps any agent operation in constitutional governance — behavioral constraints derived from the active governance mode, role hierarchy enforcement, posture-aware decision making, and cryptographic audit trails.
 
@@ -107,7 +107,7 @@ Before executing ANY operation (especially onchain transactions, data analysis, 
 Operator: [Mode: High Security] [Posture: DEFENSE] [Role: Primary]
 "Transfer 50 SOL to marketing wallet 7xK...3nR"
 
-Agent with MO§E§™:
+Agent with MO§ES™:
 → Governance: High Security requires verification of recipient
 → Posture: DEFENSE flags outbound transfer for review
 → Action: "Transfer held. High Security + DEFENSE posture requires:
@@ -123,7 +123,7 @@ Agent with MO§E§™:
 Operator: [Mode: Research] [Posture: SCOUT] [Role: Primary]
 "Analyze SOL/USDC price action for entry opportunities"
 
-Agent with MO§E§™:
+Agent with MO§ES™:
 → Governance: Research mode requires documented methodology
 → Posture: SCOUT means information only, no trade execution
 → Action: Performs analysis, documents methodology, identifies opportunities
@@ -162,9 +162,9 @@ accuracy above all, uncertainty flagged, sources cited.
 - `references/postures.md` — Posture constraint definitions
 - `assets/governance-schema.json` — Context assembly JSON template
 
-## About MO§E§™
+## About MO§ES™
 
-MO§E§™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is a constitutional framework for AI governance developed by Ello Cello LLC. Patent pending. Peer-reviewed academic paper published with independent validation from cryptographic research (ABBA, Imperial College London).
+MO§ES™ (Modus Operandi System for Signal Encoding and Scaling Expansion) is a constitutional framework for AI governance developed by Ello Cello LLC. Patent pending. Peer-reviewed academic paper published with independent validation from cryptographic research (ABBA, Imperial College London).
 
 The framework treats governance as a first-class architectural concern — not an afterthought, not a wrapper, not a filter. Governance is the operating system. Agents are workers within it.
 

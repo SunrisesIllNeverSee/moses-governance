@@ -1,4 +1,4 @@
-# Architecture — MO§E§™ Governance Plugin
+# Architecture — MO§ES™ Governance Plugin
 
 ## Design Principle
 

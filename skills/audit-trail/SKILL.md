@@ -1,12 +1,12 @@
 ---
 name: audit-trail
 description: "Logs every governed action to a SHA-256 tamper-evident hash chain. Auto-activates on any governed interaction — when a governance mode is set, when any command is executed, when any state change occurs. Produces an append-only, verifiable audit ledger."
-origin: MO§E§™
+origin: MO§ES™
 ---
 
 # Audit Trail — SHA-256 Hash Chain
 
-Every action taken under MO§E§™ governance is logged and hashed. The ledger is append-only and tamper-evident.
+Every action taken under MO§ES™ governance is logged and hashed. The ledger is append-only and tamper-evident.
 
 ## What Gets Logged
 

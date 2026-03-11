@@ -1,4 +1,4 @@
-"""MO§E§™ Audit Spine — SHA-256 hashing + append-only governance ledger.
+"""MO§ES™ Audit Spine — SHA-256 hashing + append-only governance ledger.
 
 Every governed action is logged. Every log entry is hashed.
 The chain is append-only. Nothing is deleted. Nothing is modified.

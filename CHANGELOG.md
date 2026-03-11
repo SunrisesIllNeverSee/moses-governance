@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the MO§E§™ Governance plugin will be documented in this file.
+All notable changes to the MO§ES™ Governance plugin will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioned per [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -22,5 +22,5 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versio
 
 ### Notes
 - Patent pending: PPA4, Serial No. 63/877,177
-- Peer-reviewed paper published with independent validation
+- Preprint published with independent validation
 - Live demo at mos2es.io

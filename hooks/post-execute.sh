@@ -1,5 +1,5 @@
 #!/bin/bash
-# MO§E§™ Post-Execute Hook
+# MO§ES™ Post-Execute Hook
 # Runs after any action to log to audit trail.
 # Place in .claude/hooks/post-execute.sh
 

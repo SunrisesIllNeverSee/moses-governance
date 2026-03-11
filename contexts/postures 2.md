@@ -1,4 +1,4 @@
-# MO§E§™ Posture Controls — Reference
+# MO§ES™ Posture Controls — Reference
 
 ## SCOUT
 **Behavior:** Information gathering only.

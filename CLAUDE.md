@@ -1,7 +1,7 @@
 # CLAUDE.md — Luthen / Ello Cello LLC
 
 ## Who I Am
-Non-technical founder building MO§E§™ (constitutional AI governance framework), KA§§A (governed marketplace), and COMMAND (governance console at mos2es.io). Patent pending: PPA4, Serial No. 63/877,177. Peer-reviewed paper published.
+Non-technical founder building MO§ES™ (constitutional AI governance framework), KA§§A (governed marketplace), and COMMAND (governance console at mos2es.io). Patent pending: PPA4, Serial No. 63/877,177. Preprint published.
 
 ## Document Numbering (ALWAYS ACTIVE)
 
@@ -38,7 +38,7 @@ DOC [SEQ] | [TOPIC/THEME TAG]
 - Key decisions
 
 ## Brand
-- MO§E§™ (always ™) — governance framework
+- MO§ES™ (always ™) — governance framework
 - KA§§A (§§) — marketplace
 - COMMAND (all caps headers, title case prose) — console
 - Gold: #C4923A | Bone White palette

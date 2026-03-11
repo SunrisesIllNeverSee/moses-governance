@@ -1,4 +1,4 @@
-"""MO§E§™ Governance Engine — Mode translation + context assembly.
+"""MO§ES™ Governance Engine — Mode translation + context assembly.
 
 Translates governance modes into behavioral constraints,
 assembles governed context for agent operations.
@@ -245,7 +245,7 @@ def assemble_context(
     """
     Build the full governed payload that an agent receives.
     
-    This is the core IP. This function is why MO§E§™ exists.
+    This is the core IP. This function is why MO§ES™ exists.
     Every agent read passes through here.
     """
     mode_config = translate_mode(governance.mode)
