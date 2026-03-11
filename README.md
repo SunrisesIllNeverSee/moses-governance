@@ -31,11 +31,9 @@ claude --plugin-dir ./moses-governance
 
 ## Enforcement Architecture
 
-**v1.0 (current):** Governance is enforced at the tool-use layer. Every Bash command, file write, and file edit is evaluated against the active governance mode before execution — prohibited actions are blocked. Every user prompt injects the active governance context. Every response and tool action is logged to the cryptographic audit trail.
+**Tool-use layer (v1.0):** Every Bash command, file write, and file edit is evaluated against the active governance mode before execution — prohibited actions are blocked with exit code 2. Every user prompt injects the active governance context. Every response and tool action is logged to the cryptographic audit trail. Conversational responses are governed by skill instructions, which Claude follows as constitutional directives.
 
-Conversational responses (Claude generating text without invoking a tool) are governed by skill instructions, which Claude follows as constitutional directives. Full technical interception of conversational output is planned for v1.1 via the standalone MCP server.
-
-**v1.1 (planned):** Standalone FastMCP server acts as external enforcement daemon — every action, including conversational responses, passes through the governance engine before reaching the user.
+**MCP server layer (v1.1, shipped):** A standalone FastMCP server exposes 23 governance tools — mode/posture/role control, vault management, cryptographic audit, commitment conservation scoring, Grok Oracle verification, agent swarm coordination, and a self-amending living constitution with HMAC-signed amendments. Starts automatically on plugin install. Both layers share `governance_state.json` — state is consistent across hooks and MCP tools.
 
 ## What You Get
 
