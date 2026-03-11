@@ -9,7 +9,7 @@
     "url": "https://mos2es.io"
   },
   "homepage": "https://mos2es.io",
-  "repository": "https://github.com/burnmydays/moses-governance",
+  "repository": "https://github.com/sunrisesillneversee/moses-governance",
   "license": "SEE LICENSE.md",
   "skills": "./skills/",
   "commands": "./commands/",

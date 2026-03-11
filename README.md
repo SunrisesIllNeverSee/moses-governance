@@ -13,7 +13,7 @@
 /plugin install moses-governance@claude-plugin-directory
 
 # From the MO§E§™ marketplace directly
-/plugin marketplace add burnmydays/moses-governance
+/plugin marketplace add sunrisesillneversee/moses-governance
 
 # Or test locally during development
 claude --plugin-dir ./moses-governance
