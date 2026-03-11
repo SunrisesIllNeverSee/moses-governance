@@ -45,10 +45,12 @@ Before executing ANY operation (especially onchain transactions, data analysis, 
 
 1. **Governance Check**
    - Load current mode from operator's last setting
-   - Run `scripts/governance.py translate_mode(current_mode)` to get behavioral constraints
-   - Check if the requested action is permitted under current constraints
-   - If prohibited: inform operator, explain why, suggest alternative or mode change
-   - If permitted with conditions: state the conditions before proceeding
+   - Get active constraints by running:
+     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" translate_mode "[MODE]"`
+   - Check if the action is permitted by running:
+     `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" check_action "[ACTION]" --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"`
+   - If `"permitted": false`: inform operator, state the `reason`, suggest alternative or mode change
+   - If `"permitted": true` with conditions: state conditions before proceeding
 
 2. **Posture Check**
    - Load current posture (defaults to SCOUT if not set)
@@ -64,10 +66,18 @@ Before executing ANY operation (especially onchain transactions, data analysis, 
 4. **Execute** the action within governance parameters
 
 5. **Audit Log**
-   - Run `scripts/audit.py log_action()` with: action description, governance mode, posture, role, timestamp, outcome
-   - Generate SHA-256 hash of the log entry
-   - Append to audit ledger
-   - Report hash to operator
+   - Log the action by running:
+     ```bash
+     python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
+       --component "governance" \
+       --action "[ACTION_NAME]" \
+       --mode "[MODE]" \
+       --posture "[POSTURE]" \
+       --role "[ROLE]" \
+       --detail "{\"description\": \"[ACTION DESCRIPTION]\", \"outcome\": \"[permitted|blocked]\"}" \
+       --ledger "${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
+     ```
+   - Report the returned hash to operator
 
 ### Governance Mode Quick Reference
 
