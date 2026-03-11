@@ -97,6 +97,16 @@ Skills are namespaced under the plugin name. When installed, they appear as:
 
 These limitations are documented, bounded, and tracked. The self-stress-testing in `Stresstesting/STRESS-TEST-CONCERNS.md` covers every known gap with severity ratings and fix paths.
 
+## What Makes This Defensible
+
+Three things combine into a moat that no other plugin in this space currently has:
+
+**The theoretical framework.** The McHenry Conservation Law is a named, published, DOI-citable contribution to the AI governance literature. Competitors cannot implement "commitment conservation" without citing the work that defined it. The Zenodo preprint is the anchor.
+
+**The patent.** PPA4, Serial No. 63/877,177 covers the architecture. A competing plugin that replicates the MO§ES™ approach — external MCP referee daemon, commitment scoring, constitutional amendment protocol — does so in the shadow of this IP.
+
+**The self-amending constitution.** No other AI governance platform, at any tier, has a constitution that reads its own audit trail and proposes improvements. Meta-governance — the governance system governing itself — is architecturally novel and widens the gap over time as the constitution accumulates operational history.
+
 ## Documentation
 
 - [Architecture](ARCHITECTURE.md) — System design and data flow
