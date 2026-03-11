@@ -322,50 +322,121 @@ def assemble_context(
     return context
 
 
+# ── Concept Keyword Map ────────────────────────────────────────
+# Maps semantic concepts (derived from prohibited rule language)
+# to signal words that indicate the concept is present in an action.
+
+_CONCEPT_SIGNALS: dict[str, list[str]] = {
+    "transaction":      ["transfer", "send", "swap", "trade", "pay", "wire", "transact"],
+    "execution":        ["execute", "deploy", "run", "launch", "trigger", "call", "invoke"],
+    "destructive":      ["delete", "remove", "drop", "destroy", "wipe", "purge", "rm -"],
+    "approval":         ["approve", "sign", "authorize", "accept", "confirm"],
+    "outbound":         ["upload", "post", "publish", "submit", "push", "export", "send"],
+    "external_access":  ["external", "api", "url", "fetch", "request", "http", "access"],
+    "sensitive_data":   ["password", "key", "secret", "credential", "token", "private", "seed"],
+    "speculation":      ["assume", "probably", "guess", "might be", "i think", "perhaps"],
+    "inference_as_fact":["definitely", "certainly", "guaranteed", "always", "never", "obviously"],
+    "state_change":     ["write", "edit", "modify", "update", "create", "overwrite", "save"],
+    "autonomous":       ["automatically", "without asking", "skip confirmation", "just do it"],
+}
+
+
+def _action_concepts(action: str) -> set[str]:
+    """Extract semantic concepts present in an action description."""
+    action_lower = action.lower()
+    return {
+        concept
+        for concept, signals in _CONCEPT_SIGNALS.items()
+        if any(sig in action_lower for sig in signals)
+    }
+
+
+def _rule_triggered(rule: str, concepts: set[str]) -> bool:
+    """
+    Check whether a prohibited rule is triggered by the action's concepts.
+    Maps rule language to concepts — no hardcoded per-mode logic.
+    """
+    rule_lower = rule.lower()
+    trigger_map = {
+        "transaction":       ["transaction", "transfer", "swap", "trade"],
+        "execution":         ["execut", "deploy", "run"],
+        "destructive":       ["destructive", "delete", "irreversible", "remov"],
+        "approval":          ["approv", "sign", "authoriz"],
+        "outbound":          ["outbound", "transfer", "transmit", "send"],
+        "external_access":   ["external", "resource", "api", "access"],
+        "sensitive_data":    ["sensitive", "data", "privacy", "exposure", "private"],
+        "speculation":       ["speculative", "speculation", "without evidence", "unverified"],
+        "inference_as_fact": ["inference", "as fact", "established fact", "presenting"],
+        "state_change":      ["state change", "modif", "writ"],
+        "autonomous":        ["autonomous", "without", "confirmation", "explicit"],
+    }
+    for concept, rule_signals in trigger_map.items():
+        if concept in concepts and any(sig in rule_lower for sig in rule_signals):
+            return True
+    return False
+
+
 def check_action_permitted(
     action_description: str,
     governance: GovernanceState,
 ) -> dict:
     """
     Check if a proposed action is permitted under current governance.
-    
-    Returns: {"permitted": bool, "reason": str, "conditions": list}
+
+    Evaluates action against:
+    1. Posture transaction policy (structural — SCOUT/DEFENSE/OFFENSE)
+    2. Mode prohibited rules (derived from active mode config)
+    3. Mode constraint conditions (confirmation requirements)
+
+    Returns: {"permitted": bool, "reason": str, "conditions": list, "triggered_rules": list}
     """
     mode_config = translate_mode(governance.mode)
-    posture_config = translate_posture(governance.posture)
+    concepts = _action_concepts(action_description)
+    conditions: list[str] = []
+    triggered_rules: list[str] = []
 
-    # Check posture transaction policy
+    # ── 1. Posture check (structural) ─────────────────────────
     if governance.posture == "SCOUT":
-        if any(word in action_description.lower()
-               for word in ["transfer", "send", "swap", "trade", "execute", "deploy",
-                            "approve", "sign", "submit"]):
+        state_changing = concepts & {"transaction", "execution", "destructive",
+                                     "approval", "outbound", "state_change"}
+        if state_changing:
             return {
                 "permitted": False,
                 "reason": "SCOUT posture prohibits state-changing operations",
+                "triggered_rules": [f"SCOUT: read-only — detected: {', '.join(state_changing)}"],
                 "conditions": ["Switch to DEFENSE or OFFENSE posture to enable execution"],
             }
 
-    # Check mode prohibitions
-    # v1.0: Posture and High Security keyword checks (below) cover primary
-    # enforcement. Semantic matching of action_description against
-    # mode_config["prohibited"] entries is planned for v1.1 when the
-    # COMMAND backend provides structured action classification.
-
-    # Check DEFENSE confirmation requirements
-    conditions = []
     if governance.posture == "DEFENSE":
-        if any(word in action_description.lower()
-               for word in ["transfer", "send", "withdraw"]):
-            conditions.append("Explicit operator confirmation required (DEFENSE posture)")
+        if concepts & {"transaction", "outbound"}:
+            conditions.append(
+                "Explicit operator confirmation required (DEFENSE posture — outbound detected)"
+            )
 
-    if governance.mode == "High Security":
-        if any(word in action_description.lower()
-               for word in ["transfer", "deploy", "delete", "approve"]):
-            conditions.append("Explicit operator confirmation required (High Security mode)")
+    # ── 2. Mode prohibited rules (rule-driven) ────────────────
+    for rule in mode_config.get("prohibited", []):
+        if _rule_triggered(rule, concepts):
+            triggered_rules.append(rule)
+
+    if triggered_rules:
+        return {
+            "permitted": False,
+            "reason": f"Action violates {governance.mode} mode prohibition",
+            "triggered_rules": triggered_rules,
+            "conditions": [f"Change mode or rephrase action to comply with: {r}" for r in triggered_rules],
+        }
+
+    # ── 3. Mode constraint conditions ─────────────────────────
+    for constraint in mode_config.get("constraints", []):
+        constraint_lower = constraint.lower()
+        if "confirmation" in constraint_lower or "explicit" in constraint_lower:
+            if concepts & {"transaction", "destructive", "approval", "outbound"}:
+                conditions.append(f"Required by {governance.mode}: {constraint}")
 
     return {
         "permitted": True,
         "reason": f"Action permitted under {governance.mode} + {governance.posture}",
+        "triggered_rules": [],
         "conditions": conditions,
     }
 
