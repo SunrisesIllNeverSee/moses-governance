@@ -262,6 +262,29 @@ moses-governance-mcp/
 
 ---
 
+---
+
+### 2026-03-11T17:50:00Z — Pre-Push Proposal Review + Rejection
+**Agent:** Claude (Cowork, Session 2 — context resumed)
+
+**Action:** Reviewed all 3 pending meta-governance proposals before any push to production branch.
+
+**Proposals reviewed:**
+
+| ID | Type | Target | Block Rate | Decision | Reason |
+|----|------|--------|-----------|----------|--------|
+| `6d9042e26ad9` | posture_modification | SCOUT | 68.4% | **REJECTED** | Test-data artifact — acceptance tests hammer limits intentionally |
+| `a0aeaabb447e` | posture_modification | SCOUT | 76.5% | **REJECTED** | Duplicate of above, same session test data |
+| `0d982175f6fe` | mode_modification | High Security | 61.9% | **REJECTED** | Was already rejected during testing; confirmed correct |
+
+**Analysis:** All three proposals suggested relaxing SCOUT/High Security constraints because block rates were "high" during acceptance testing. This is backwards — high block rates during testing confirm the posture is working, not that it's misconfigured. The meta-governance heuristic (`block_rate > 0.5` → propose relaxation) is correct for production drift analysis but produces false positives when the audit trail is dominated by adversarial test traffic. The `analyze_audit_trail()` function needs a `exclude_test_sessions` flag in a future version.
+
+**State after:** `data/proposals/pending/` is empty. `data/proposals/rejected/` has all 3. Constitution remains at v1.0.1, unchanged. No governance constraints were loosened.
+
+**Key principle enforced:** The self-amending constitution cannot loosen constraints without operator review. These proposals never reached `apply_amendment()` — they were caught at the review gate before any push. This is exactly how the system should work.
+
+---
+
 ## Notes for Claude Code
 
 - **Transport:** stdio only (v1.1). HTTP transport deferred to v1.2.
