@@ -6,3 +6,22 @@ __pycache__/
 audit-ledger.json
 audit_ledger.jsonl
 .env
+
+# Internal working files — not for public repo
+Stresstesting/
+archive/
+CLAUDE.md
+COMMAND-Claude-Plugin-Submission.md
+SUBMISSION-CHECKLIST.md
+Plugin-Spec-Compliance-Check.md
+MCP-SERVER-BUILD.md
+001_*.md
+docs/COMMAND-Claude-Plugin-Submission.md
+docs/Plugin-Spec-Compliance-Check.md
+moses-governance-mcp/COWORK-LOG.md
+moses-governance-mcp/MCP-FROM-REVIEWS.md
+moses-governance-mcp/MCP-SERVER-BUILD.md
+.gitignore\ 2
+.claude/
+SKILL.md
+SKILL-full.md
