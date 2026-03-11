@@ -5,6 +5,8 @@ __pycache__/
 *.log
 audit-ledger.json
 audit_ledger.jsonl
+data/audit_ledger.jsonl
+data/governance_state.json
 .env
 
 # Internal working files — not for public repo

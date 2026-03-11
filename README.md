@@ -197,11 +197,11 @@ Three things combine into a moat that no other plugin in this space currently ha
 
 ## Documentation
 
-- [Architecture](ARCHITECTURE.md) — System design and data flow
-- [Enterprise Use](ENTERPRISE-USE.md) — Deployment patterns, compliance mapping, security posture
-- [Competitive Landscape](002_Competitive-Landscape.md) — Head-to-head analysis
-- [Patent Notice](PATENT-NOTICE.md) — IP and patent status
-- [Notice](NOTICE.md) — Preprint citation and validation
+- [Architecture](docs/ARCHITECTURE.md) — System design and data flow
+- [Enterprise Use](docs/ENTERPRISE-USE.md) — Deployment patterns, compliance mapping, security posture
+- [Competitive Landscape](docs/002_Competitive-Landscape.md) — Head-to-head analysis
+- [Patent Notice](docs/PATENT-NOTICE.md) — IP and patent status
+- [Notice](docs/NOTICE.md) — Preprint citation and validation
 
 ## Why This Exists
 
@@ -223,6 +223,8 @@ Live console: [mos2es.io](https://mos2es.io) | Contact: contact@burnmydays.com
 
 ## License
 
-Source-available. See [LICENSE.md](LICENSE.md).
+Source-available for evaluation. See [LICENSE.md](LICENSE.md).
+
+**Commercial use:** [Commercial License →](https://gumroad.com/your-link)
 
 © 2026 Ello Cello LLC. All rights reserved.
