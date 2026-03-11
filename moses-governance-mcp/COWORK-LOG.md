@@ -315,16 +315,49 @@ The `amendment_notes` key is documentary only — `check_action_permitted()` enf
 
 ### 2026-03-11T18:05:00Z — SECURITY GAP: Weak Operator Signature Format
 **Severity:** HIGH — must fix before production
+**Status: RESOLVED in Session 2 (2026-03-11T18:20:00Z)**
 
-**Current format:** `"operator:luthen:sig:2026-03-11"` — plain string, no cryptographic proof.
+**Was:** `"operator:luthen:sig:2026-03-11"` — plain forgeable string.
 
-**Problem:** Any caller who knows the format can forge an operator signature and push constitution amendments. `apply_amendment()` only checks the field is non-empty.
+**Now:** HMAC-SHA256 keyed against `MOSES_OPERATOR_SECRET` environment variable.
 
-**Required fix (pre-production):** Replace with HMAC-SHA256 keyed against `MOSES_OPERATOR_SECRET` env var. Validate in `apply_amendment()` before writing anything to disk.
+**Changes made:**
+- `governance/meta.py`: Added `make_operator_sig()`, `_verify_operator_sig()`, `_get_operator_secret()`
+- `apply_amendment()` and `rollback_amendment()` now call `_verify_operator_sig()` before touching any file
+- `server.py`: New `meta_generate_sig` tool (tool #23) — operators call this to get a valid HMAC signature without touching Python
+- `.mcp.json`: `MOSES_OPERATOR_SECRET` env var now passed through alongside `XAI_GROK_API_KEY`
+- Legacy `operator:*` format: accepted with warning when `MOSES_OPERATOR_SECRET` is not set (zero-downtime migration), rejected when secret IS set
 
-**Interim mitigation:** `core_principles_immutable: true` protects the 7 bedrock principles. But `mode_modification` and `posture_modification` amendments can be forced through with a known string.
+**Remaining limitation (v2.0):** Signature is scoped to the operator secret but not fully bound to a specific proposal_id due to the verify function not receiving operator_id. A valid HMAC could technically be replayed across proposals. Proposal-ID binding requires the auth layer (v2.0). The `sig_verification` field in the amendments.jsonl entry records this status per amendment.
 
-**Action required:** Claude Code — do not ship `meta_apply_amendment` to production without this fix.
+**Setup for production:**
+```bash
+export MOSES_OPERATOR_SECRET=$(openssl rand -hex 32)
+# Store this secret securely (password manager, secrets vault, etc.)
+# Use meta_generate_sig(operator_id, proposal_id) to generate signatures
+```
+
+---
+
+### 2026-03-11T18:20:00Z — Test Session Tagging Added to analyze_audit_trail()
+**Status: RESOLVED**
+
+**Was:** `analyze_audit_trail()` had no way to distinguish test traffic from real usage. Acceptance tests generated false amendment proposals because boundary-probe sessions produced high block rates.
+
+**Now:** `analyze_audit_trail()` accepts `exclude_tags: list[str]` parameter. Entries with `{"session_tag": "<tag>"}` in their `detail` dict are excluded before heuristic analysis runs.
+
+**How to tag test sessions:** Pass `detail={"session_tag": "test", ...}` in any `audit_log` call (or `AuditLedger.log_action`) during testing/CI. In `server.py`, the `audit_log` tool passes detail through directly — so MCP callers can tag at log time.
+
+**How to run clean production analysis:**
+```
+meta_analyze_trail(timeframe="month", exclude_tags=["test", "dev", "ci"])
+```
+
+**Result returns:** `entries_excluded_by_tag: int` so operators can see how many entries were filtered.
+
+**Verified:** With 6 tagged test entries + 2 real entries in a synthetic ledger:
+- Without filter: 8 analyzed, 2 proposals generated (false positives)
+- With `exclude_tags=["test"]`: 2 analyzed, 0 proposals (correct — below min threshold of 5)
 
 ---
 
