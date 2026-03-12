@@ -3,6 +3,7 @@
 # Runs after any action to log to audit trail.
 # Place in .claude/hooks/post-execute.sh
 
+CLAUDE_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
 AUDIT_LEDGER="${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
 

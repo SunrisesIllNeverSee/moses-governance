@@ -4,6 +4,7 @@
 #
 # © 2026 Ello Cello LLC. Patent Pending: Serial No. 63/877,177
 
+CLAUDE_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
 
 if [ -f "$GOVERNANCE_STATE" ]; then
