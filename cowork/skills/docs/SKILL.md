@@ -1,8 +1,13 @@
 ---
 name: docs
 description: Activate MO§ES™ document governance for this session. Every document produced gets sequential numbering, a governance header, and cross-reference tracking. Travels with any user — not tied to CLAUDE.md.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Document Governance
 
 When invoked, activate document governance for the remainder of this session. Confirm activation, then apply the rules to every document produced.

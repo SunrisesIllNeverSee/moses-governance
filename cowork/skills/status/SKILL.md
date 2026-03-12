@@ -1,8 +1,13 @@
 ---
 name: status
 description: Show full governance state — active mode, posture, role, vault contents, and session event count.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Governance Status
 
 When invoked, report the complete current governance state for this session.

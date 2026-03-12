@@ -1,8 +1,13 @@
 ---
 name: govern
 description: Set the active MO§ES™ governance mode. Injects mode constraints into the conversation — Claude self-enforces for the remainder of the session.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Governance Mode
 
 When this skill is invoked, set the active governance mode based on the argument provided. Apply the mode's constraints to all subsequent responses in this conversation.

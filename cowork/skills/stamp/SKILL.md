@@ -1,8 +1,13 @@
 ---
 name: stamp
 description: Embed a MO§ES™ governance stamp into every document produced this session. The output itself carries the audit record — mode, posture, session ID, action hash. The document is governed, not just the process.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Governed Output
 
 When invoked, activate governed output for the remainder of this session. Every document produced will carry an embedded governance stamp — not as a separate log, but inside the document itself.

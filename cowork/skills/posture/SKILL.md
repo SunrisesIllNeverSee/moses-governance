@@ -1,8 +1,13 @@
 ---
 name: posture
 description: Set operational posture. Controls transaction scope and action boundaries for all Claude operations in this session.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Operational Posture
 
 Posture controls how broadly Claude acts in this session — the scope of changes it will make, transactions it will initiate, and how cautiously it operates.

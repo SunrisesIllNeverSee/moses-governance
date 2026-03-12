@@ -1,8 +1,13 @@
 ---
 name: role
 description: Set role in the MO§ES™ agent hierarchy. Controls authority level and behavioral scope in multi-agent and collaborative workflows.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Role Hierarchy
 
 Role defines Claude's authority level and behavioral scope in this session — how it relates to instructions from other agents, operators, and users in a multi-agent or collaborative context.

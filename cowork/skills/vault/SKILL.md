@@ -1,8 +1,13 @@
 ---
 name: vault
 description: Load a governance document into active context. The document is injected and applied to all subsequent Claude interactions this session.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Vault
 
 Vault loads governance documents — constitutions, operating agreements, role definitions, constraint sets — into the active session context so Claude applies them throughout the conversation.

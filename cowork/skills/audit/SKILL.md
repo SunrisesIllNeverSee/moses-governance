@@ -1,8 +1,13 @@
 ---
 name: audit
 description: View the governance audit trail for this session. Summarizes all governed actions, mode changes, posture shifts, and decisions made under active governance.
+license: Proprietary — © 2026 Ello Cello LLC
+metadata:
+  version: "1.0.0"
+  author: "Ello Cello LLC"
+  category: "governance"
+  website: "https://mos2es.io"
 ---
-
 # MO§ES™ Audit Trail
 
 Audit generates a structured summary of all governance events in this conversation — mode changes, posture shifts, role assignments, vault loads, and significant decisions made under active governance.
