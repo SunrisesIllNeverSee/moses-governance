@@ -1,12 +1,7 @@
 ---
 name: role
-description: Set role in the MO§ES™ agent hierarchy. Controls authority level and behavioral scope in multi-agent and collaborative workflows.
-license: Proprietary — © 2026 Ello Cello LLC
-metadata:
-  version: "1.0.0"
-  author: "Ello Cello LLC"
-  category: "governance"
-  website: "https://mos2es.io"
+description: >
+  Sets the agent role in a MO§ES™ hierarchy — Primary, Specialist, or Observer — controlling authority level and behavioral scope. Use when coordinating multi-agent workflows, when you need to establish Claude's authority level, or when you say 'set role', 'act as specialist', or 'observer mode'.
 ---
 # MO§ES™ Role Hierarchy
 

@@ -1,12 +1,7 @@
 ---
 name: docs
-description: Activate MO§ES™ document governance for this session. Every document produced gets sequential numbering, a governance header, and cross-reference tracking. Travels with any user — not tied to CLAUDE.md.
-license: Proprietary — © 2026 Ello Cello LLC
-metadata:
-  version: "1.0.0"
-  author: "Ello Cello LLC"
-  category: "governance"
-  website: "https://mos2es.io"
+description: >
+  Activates session-wide document governance: sequential numbering (001_, 002_...), structured headers, and cross-reference tracking on every document produced. Use when starting a governed work session, when you need traceable document output, or when you say 'track documents', 'number my docs', or 'document governance on'.
 ---
 # MO§ES™ Document Governance
 

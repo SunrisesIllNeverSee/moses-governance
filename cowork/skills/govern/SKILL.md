@@ -1,12 +1,7 @@
 ---
 name: govern
-description: Set the active MO§ES™ governance mode. Injects mode constraints into the conversation — Claude self-enforces for the remainder of the session.
-license: Proprietary — © 2026 Ello Cello LLC
-metadata:
-  version: "1.0.0"
-  author: "Ello Cello LLC"
-  category: "governance"
-  website: "https://mos2es.io"
+description: >
+  Sets a constitutional governance mode that constrains Claude's behavior for the entire session — accuracy, security, creativity, or research depth. Use when starting a governed session, when you want behavioral guardrails applied to all responses, or when you say 'govern this session', 'set governance mode', or 'activate high-integrity mode'.
 ---
 # MO§ES™ Governance Mode
 

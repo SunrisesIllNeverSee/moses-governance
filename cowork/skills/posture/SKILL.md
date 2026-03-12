@@ -1,12 +1,7 @@
 ---
 name: posture
-description: Set operational posture. Controls transaction scope and action boundaries for all Claude operations in this session.
-license: Proprietary — © 2026 Ello Cello LLC
-metadata:
-  version: "1.0.0"
-  author: "Ello Cello LLC"
-  category: "governance"
-  website: "https://mos2es.io"
+description: >
+  Sets the operational posture for the session — Scout (read-only), Defense (protect existing state), or Offense (execute and act). Use when you need to control what Claude is allowed to do, when preparing for a transaction or risky action, or when you say 'set posture', 'read-only mode', or 'go on offense'.
 ---
 # MO§ES™ Operational Posture
 

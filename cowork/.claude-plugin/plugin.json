@@ -1,28 +1,10 @@
 {
-  "name": "moses-governance-cowork",
+  "name": "governance",
   "version": "1.0.0",
-  "description": "Constitutional AI governance for Claude.ai Chat and Cowork. Prompt-native enforcement — no installation required. Set governance modes, operational postures, role hierarchy, and maintain a live conversation audit trail. Built on MO§ES™ framework by Ello Cello LLC.",
+  "description": "Constitutional AI governance for any session. Set modes, postures, and roles that persist across every action. Built on MO§ES™ by Ello Cello LLC.",
   "author": {
-    "name": "Ello Cello LLC",
-    "email": "contact@burnmydays.com",
-    "url": "https://mos2es.io"
+    "name": "Ello Cello LLC"
   },
   "homepage": "https://mos2es.io",
-  "repository": "https://github.com/SunrisesIllNeverSee/moses-governance",
-  "license": "Other",
-  "keywords": [
-    "governance",
-    "ai-safety",
-    "audit",
-    "constitution",
-    "compliance",
-    "moses",
-    "cowork",
-    "chat",
-    "prompt-native",
-    "enterprise"
-  ],
-  "categories": ["governance", "productivity", "enterprise"],
-  "skills": "./skills/",
-  "commands": "./commands/"
+  "repository": "https://github.com/SunrisesIllNeverSee/moses-governance"
 }
