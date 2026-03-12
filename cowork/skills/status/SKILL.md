@@ -1,7 +1,6 @@
 ---
 name: status
 description: Show full governance state — active mode, posture, role, vault contents, and session event count.
-trigger: User invokes /status or asks for current governance state
 ---
 
 # MO§ES™ Governance Status

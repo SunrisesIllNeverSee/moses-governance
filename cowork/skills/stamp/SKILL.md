@@ -1,7 +1,6 @@
 ---
-name: governed-output
+name: stamp
 description: Embed a MO§ES™ governance stamp into every document produced this session. The output itself carries the audit record — mode, posture, session ID, action hash. The document is governed, not just the process.
-trigger: User invokes /governed-output, asks to stamp documents with governance metadata, or asks for governed document production
 ---
 
 # MO§ES™ Governed Output

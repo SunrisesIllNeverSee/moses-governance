@@ -1,7 +1,6 @@
 ---
 name: audit
 description: View the governance audit trail for this session. Summarizes all governed actions, mode changes, posture shifts, and decisions made under active governance.
-trigger: User invokes /audit or asks to see the audit trail or governance log
 ---
 
 # MO§ES™ Audit Trail

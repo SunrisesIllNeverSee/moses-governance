@@ -1,7 +1,6 @@
 ---
 name: posture
 description: Set operational posture. Controls transaction scope and action boundaries for all Claude operations in this session.
-trigger: User invokes /posture [posture] or asks to set operational posture
 ---
 
 # MO§ES™ Operational Posture

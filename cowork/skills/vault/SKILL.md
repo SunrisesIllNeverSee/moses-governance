@@ -1,7 +1,6 @@
 ---
 name: vault
 description: Load a governance document into active context. The document is injected and applied to all subsequent Claude interactions this session.
-trigger: User invokes /vault [document-name-or-content] or asks to load a governance document
 ---
 
 # MO§ES™ Vault

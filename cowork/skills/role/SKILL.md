@@ -1,7 +1,6 @@
 ---
 name: role
 description: Set role in the MO§ES™ agent hierarchy. Controls authority level and behavioral scope in multi-agent and collaborative workflows.
-trigger: User invokes /role [role] or asks to set agent role
 ---
 
 # MO§ES™ Role Hierarchy

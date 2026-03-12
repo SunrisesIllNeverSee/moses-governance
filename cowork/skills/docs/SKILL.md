@@ -1,7 +1,6 @@
 ---
-name: doc-governance
+name: docs
 description: Activate MO§ES™ document governance for this session. Every document produced gets sequential numbering, a governance header, and cross-reference tracking. Travels with any user — not tied to CLAUDE.md.
-trigger: User invokes /doc-governance, asks to enable document numbering, or asks Claude to track documents in this session
 ---
 
 # MO§ES™ Document Governance

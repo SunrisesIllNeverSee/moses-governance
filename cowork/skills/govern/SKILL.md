@@ -1,7 +1,6 @@
 ---
 name: govern
 description: Set the active MO§ES™ governance mode. Injects mode constraints into the conversation — Claude self-enforces for the remainder of the session.
-trigger: User invokes /govern [mode] or asks to set governance mode
 ---
 
 # MO§ES™ Governance Mode
