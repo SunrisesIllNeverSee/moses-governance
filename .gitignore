@@ -26,5 +26,5 @@ moses-governance-mcp/MCP-SERVER-BUILD.md
 moses-governance-mcp/data/proposals/
 .gitignore\ 2
 .claude/
-SKILL.md
 SKILL-full.md
+/SKILL.md
