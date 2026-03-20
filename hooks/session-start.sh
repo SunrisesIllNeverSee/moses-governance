@@ -16,5 +16,17 @@ if [ -f "$GOVERNANCE_STATE" ]; then
     echo "  Constitutional governance is active. All tool actions are subject to enforcement."
     echo "  Use /status for full state. Use /govern to change mode."
 else
-    echo "✓ MO§ES™ Governance available. Use /govern to activate."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  MO§ES™ Constitutional AI Governance"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "  Quick start:"
+    echo "  1. /govern high-security    Set behavioral constraints"
+    echo "  2. /posture scout           Set operational scope"
+    echo "  3. /role primary            Set authority level"
+    echo ""
+    echo "  Then work normally. Governance enforces automatically."
+    echo ""
+    echo "  Other commands: /vault /audit /status /hash /docs"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 fi

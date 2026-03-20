@@ -1,6 +1,16 @@
 # MO§ES™ Governance Plugin
 
-> Your agents don't need to understand the framework. They just need to carry it.
+> Stop hoping Claude does the right thing. Start governing it.
+
+## Why
+
+Every time you use Claude, it operates with no guardrails, no memory of what mode you're in, and no record of what happened. That's fine for casual chat. It's not fine when you're working on production systems, financial analysis, security reviews, or anything where "Claude just winged it" isn't acceptable.
+
+MO§ES™ adds what Claude doesn't have: **behavioral modes** that constrain how it responds, **operational posture** that controls what it's allowed to do, and **a cryptographic audit trail** that proves what was governed and when.
+
+Type `/govern high-security` and Claude stops guessing — it verifies claims, requires confirmation before destructive actions, and logs its reasoning chain. Type `/posture scout` and Claude gathers information only — no file writes, no code execution, no state changes. Every governance decision is logged with SHA-256 hashes to an append-only ledger.
+
+Install it. Set a mode. Work normally. Governance enforces automatically.
 
 ## What This Does
 

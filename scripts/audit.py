@@ -246,7 +246,7 @@ if __name__ == "__main__":
 
     # recent subcommand
     recent_parser = subparsers.add_parser("recent", help="Show recent entries")
-    recent_parser.add_argument("--n", type=int, default=10)
+    recent_parser.add_argument("-n", "--count", type=int, default=10, help="Number of recent entries to show")
     recent_parser.add_argument("--ledger", default="./data/audit_ledger.jsonl")
 
     args = parser.parse_args()
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     elif args.command == "recent":
         import json as _json
         ledger = AuditLedger(args.ledger)
-        for entry in ledger.get_recent(args.n):
+        for entry in ledger.get_recent(args.count):
             print(_json.dumps(entry, indent=2))
 
     else:

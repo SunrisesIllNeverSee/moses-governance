@@ -5,7 +5,22 @@ argument-hint: [high-security|high-integrity|creative|research|self-growth|probl
 
 # /govern
 
-Set the governance mode to "$ARGUMENTS". If no argument provided, show the current active mode.
+Set the governance mode to "$ARGUMENTS".
+
+If no argument provided, show the current active mode AND present a quick picker:
+
+```
+Current mode: [active mode or "none"]
+
+Pick a mode:
+  /govern high-security     — verify claims, confirm before destructive actions
+  /govern high-integrity    — accuracy first, cite sources, flag uncertainty
+  /govern creative          — explore freely, log reasoning shifts
+  /govern research          — deep investigation, document methodology
+  /govern problem-solving   — decompose, solve, verify
+  /govern idk               — guided discovery, clarifying questions
+  /govern unrestricted      — no constraints (still audited)
+```
 
 ## Modes
 

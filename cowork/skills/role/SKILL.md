@@ -1,7 +1,7 @@
 ---
 name: role
 description: >
-  Sets the agent role in a MO§ES™ hierarchy — Primary, Specialist, or Observer — controlling authority level and behavioral scope. Use when coordinating multi-agent workflows, when you need to establish Claude's authority level, or when you say 'set role', 'act as specialist', or 'observer mode'.
+  Sets the agent role in a MO§ES™ hierarchy — Primary, Sub, Observer, or Orchestrator — controlling authority level and behavioral scope. Use when coordinating multi-agent workflows, when you need to establish Claude's authority level, or when you say 'set role', 'act as sub', 'observer mode', or 'orchestrator'.
 ---
 # MO§ES™ Role Hierarchy
 

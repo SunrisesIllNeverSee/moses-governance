@@ -337,8 +337,9 @@ _CONCEPT_SIGNALS: dict[str, list[str]] = {
         "propagate", "spin up", "kick off", "fire", "dispatch",
     ],
     "destructive": [
-        "delete", "remove", "drop", "destroy", "wipe", "purge", "rm -",
+        "delete", "remove", "drop", "destroy", "wipe", "purge", "rm -", "rm ",
         "truncate", "erase", "overwrite", "nuke", "teardown", "shutdown",
+        "reset", "clear all", "force", "uninstall", "revoke", "terminate",
     ],
     "approval": [
         "approve", "sign", "authorize", "accept", "confirm", "ratify",
@@ -366,7 +367,8 @@ _CONCEPT_SIGNALS: dict[str, list[str]] = {
     ],
     "state_change": [
         "write", "edit", "modify", "update", "create", "overwrite", "save",
-        "patch", "mutate", "alter", "revise", "amend",
+        "patch", "mutate", "alter", "revise", "amend", "insert", "replace",
+        "rename", "move", "migrate", "transform", "convert",
     ],
     "autonomous": [
         "automatically", "without asking", "skip confirmation", "just do it",
