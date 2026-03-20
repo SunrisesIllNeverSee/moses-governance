@@ -134,31 +134,46 @@ Tamper-evident. Append-only. If anyone modifies a prior entry, the chain breaks.
 
 **Multi-agent governance** — Primary, Secondary, Observer as a team. No agent bypasses its role. Observer cannot be overridden.
 
-## 7 Auto-Activating Skills
+## 9 Auto-Activating Skills
 
-| Skill            | What It Does                                    |
-| ---------------- | ----------------------------------------------- |
-| governance-mode  | Enforces mode constraints on every action       |
-| posture-control  | Checks posture policy before execution          |
-| role-hierarchy   | Enforces sequence in multi-agent workflows      |
-| audit-trail      | Logs every action with SHA-256 chain            |
-| context-assembly | Builds governed payload from active state       |
-| doc-numbering    | Sequential numbering and cross-references       |
-| teaching-mode    | Proactively suggests shortcuts and efficiencies |
+| Skill | What It Does |
+|-------|-------------|
+| governance-mode | Enforces mode constraints on every action |
+| posture-control | Checks posture policy before execution |
+| role-hierarchy | Enforces sequence in multi-agent workflows |
+| audit-trail | Logs every action with SHA-256 chain |
+| context-assembly | Builds governed payload from active state |
+| doc-numbering | Sequential numbering and cross-references |
+| vault | Document injection and context management |
+| coverify | Commitment conservation verification — ghost tokens, Jaccard scoring, cascade risk |
+| lineage | Cryptographic origin verification — three-layer custody chain |
 
 ## Commands
 
-| Command               | Purpose                               |
-| --------------------- | ------------------------------------- |
-| `/govern <mode>`      | Set behavioral mode                   |
-| `/posture <posture>`  | Set operational posture               |
-| `/role <role>`        | Set hierarchy position                |
-| `/vault <action>`     | Load governance documents             |
-| `/command <settings>` | Fine-grained controls                 |
-| `/audit`              | View and verify audit trail           |
-| `/hash <content>`     | Generate integrity hash               |
-| `/status`             | Full governance state                 |
-| `/docs`               | Document index and session management |
+| Command | Purpose |
+|---------|---------|
+| `/govern <mode>` | Set behavioral mode |
+| `/posture <posture>` | Set operational posture |
+| `/role <role>` | Set hierarchy position |
+| `/vault <action>` | Load governance documents |
+| `/command <settings>` | Fine-grained controls |
+| `/audit` | View and verify audit trail |
+| `/hash <content>` | Generate integrity hash |
+| `/status` | Full governance state |
+| `/docs` | Document index and session management |
+| `/lineage` | Verify origin-cycle custody chain |
+
+## 7 Scripts
+
+| Script | What It Does |
+|--------|-------------|
+| `governance.py` | Mode translation, action checking, state persistence |
+| `audit.py` | SHA-256 hash chain, append-only ledger, tamper detection |
+| `sequence.py` | Role ordering, hierarchy enforcement, violation checking |
+| `vault.py` | Document management, context injection, categories |
+| `commitment_verify.py` | CoVerify — extract kernels, Jaccard scoring, ghost token detection |
+| `lineage.py` | Three-layer cryptographic origin verification (archival → anchor → live) |
+| `sign_transaction.py` | Signing tool gated by governance — SCOUT blocks, key never accessed |
 
 ## Project Structure
 
@@ -166,18 +181,20 @@ Tamper-evident. Append-only. If anyone modifies a prior entry, the chain breaks.
 moses-governance/
 ├── plugin.json              Plugin manifest
 ├── marketplace.json         Marketplace metadata
+├── settings.json            Safe defaults
 ├── agents/                  3 governed agent definitions
-├── commands/                9 slash commands
-├── skills/                  7 auto-activating skills
-├── hooks/                   Lifecycle hooks (pre/post execution, session, prompt)
-├── scripts/                 governance.py + audit.py
-├── contexts/                Pre-built governance contexts
+├── commands/                10 slash commands
+├── skills/                  9 auto-activating skills
+├── hooks/                   5 lifecycle hooks (pre/post, session, prompt, stop)
+├── scripts/                 7 Python scripts (governance, audit, sequence, vault, coverify, lineage, signing)
+├── references/              Mode, role, posture specs + ghost token spec + falsifiability
 ├── rules/                   Always-active constitutional rules
-├── references/              Mode, role, posture reference docs
+├── modes/                   7 governance mode context files
 ├── examples/                4 governance workflow examples
-├── docs/                    Architecture, quickstart, enterprise use
-├── moses-governance-mcp/    FastMCP server — 23 governance tools
-└── settings.json            Safe defaults
+├── docs/                    Architecture, quickstart, enterprise use, patent notice
+├── moses-governance-mcp/    FastMCP server — constitutional governance tools
+├── cowork/                  Prompt-native version for Claude.ai Chat/Cowork
+└── data/                    Runtime state (gitignored)
 ```
 
 ## Examples
