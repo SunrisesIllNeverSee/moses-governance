@@ -29,3 +29,8 @@ moses-governance-mcp/data/proposals/
 .claude/
 SKILL-full.md
 /SKILL.md
+
+# Packaged artifacts — source is authoritative
+cowork.zip
+governance.plugin
+governance/
