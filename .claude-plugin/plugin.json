@@ -14,7 +14,11 @@
   "license": "SEE LICENSE.md",
   "skills": "./skills/",
   "commands": "./commands/",
-  "agents": "./agents/",
+  "agents": [
+    "./agents/observer.md",
+    "./agents/primary.md",
+    "./agents/secondary.md"
+  ],
   "hooks": "./hooks/hooks.json",
   "keywords": [
     "governance",
