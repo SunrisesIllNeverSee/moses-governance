@@ -1,5 +1,15 @@
 # MO§ES™ Governance Plugin
 
+> **⚠️ SUPERSEDED — Active governance harness moved to [moses-claw-gov](https://github.com/SunrisesIllNeverSee/moses-claw-gov)**
+>
+> This repository is the earlier Claude Code plugin version of the MO§ES™
+> governance harness. The active development has moved to
+> **[moses-claw-gov](https://github.com/SunrisesIllNeverSee/moses-claw-gov)**,
+> which ships OpenClaw skills for constitutional governance (modes, postures,
+> roles, SHA-256 audit chain, commitment kernel verification, lineage custody,
+> inter-agent handshake). Do not open PRs against this repo — they will not be
+> reviewed or merged. This repo is retained for historical provenance only.
+
 > Stop hoping Claude does the right thing. Start governing it.
 
 ## Why
