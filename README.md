@@ -14,7 +14,7 @@ Install it. Set a mode. Work normally. Governance enforces automatically.
 
 ## What This Does
 
-This plugin turns any Claude Code session into a constitutionally governed agent. Install it, and every agent you build inherits behavioral modes, posture controls, role hierarchy, and a cryptographic audit trail; without writing governance logic yourself.
+This plugin turns any Claude Code session into a constitutionally governed agent. Install it, and every agent you build inherits behavioral modes, posture controls, role hierarchy, and a cryptographic audit trail, without writing governance logic yourself.
 
 Your users never touch this plugin. Your agents carry it for them.
 
@@ -39,8 +39,8 @@ The plugin ships with three agent definitions. Each one enforces governance auto
 The operator. Leads analysis, sets direction, responds first. Full tool access. Checks governance mode, posture, and vault context before every action. Logs everything to the audit chain.
 
 ```text
-Use case: Your main execution agent; research, analysis, code generation,
-task completion. Governed by default.
+Use case: Your main execution agent (research, analysis, code generation,
+task completion). Governed by default.
 ```
 
 ### Secondary Agent
@@ -110,7 +110,7 @@ Load governance documents directly into the agent's operating context.
 /vault load persona-spec.md
 ```
 
-Whatever you load becomes constitutional context. Protocols, personas, compliance frameworks; injected, not optional.
+Whatever you load becomes constitutional context. Protocols, personas, compliance frameworks. Injected, not optional.
 
 ### Cryptographic Audit Trail
 
@@ -212,11 +212,11 @@ Three things combine into a moat that no other agent-governance plugin in this s
 
 **The patent application.** A US provisional patent application (Serial No. 63/877,177) has been filed covering the architecture: an external referee daemon, commitment scoring, and a constitutional amendment protocol driven by operational history. A competing plugin that replicates this approach does so in the shadow of that filing.
 
-**The self-amending constitution.** To our knowledge, no other agent-governance plugin combines commitment conservation, chained auditing, and a self-amending constitution that reads its own audit trail and proposes updates. Meta-governance; the governance system governing itself; widens the gap over time as the constitution accumulates operational history.
+**The self-amending constitution.** To our knowledge, no other agent-governance plugin combines commitment conservation, chained auditing, and a self-amending constitution that reads its own audit trail and proposes updates. Meta-governance, the governance system governing itself, widens the gap over time as the constitution accumulates operational history.
 
 ## Current Limitations
 
-**Conversational enforcement:** Governance hooks currently fire on tool use (code execution, file operations); not on every conversational turn. Conversational responses follow constitutional instructions but can be pushed off-policy by a determined operator. Full pre-response enforcement would require inference-layer controls outside this plugin's scope.
+**Conversational enforcement:** Governance hooks currently fire on tool use (code execution, file operations), not on every conversational turn. Conversational responses follow constitutional instructions but can be pushed off-policy by a determined operator. Full pre-response enforcement would require inference-layer controls outside this plugin's scope.
 
 **HMAC operator identity:** Amendment signatures depend on a shared secret (`MOSES_OPERATOR_SECRET`). No amendment can be applied without that key, but proposals are not yet bound cryptographically to individual operator identities. Per-operator identity scoping is planned for a later version. See [Enterprise Use](docs/ENTERPRISE-USE.md) for full security posture.
 
