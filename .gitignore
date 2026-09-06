@@ -35,3 +35,7 @@ cowork.zip
 governance.plugin
 governance/
 data/lineage.json
+
+# Skylos scan output
+skylos-sec.json
+.skylos/
