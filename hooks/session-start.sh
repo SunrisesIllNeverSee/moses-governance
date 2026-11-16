@@ -5,7 +5,7 @@
 # © 2026 Ello Cello LLC. Patent Pending: Serial No. 63/877,177
 
 CLAUDE_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
+GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/moses-governance-mcp/data/governance_state.json"
 
 if [ -f "$GOVERNANCE_STATE" ]; then
     MODE=$(python3 -c "import json; d=json.load(open('$GOVERNANCE_STATE')); print(d.get('mode','None (Unrestricted)'))" 2>/dev/null)
@@ -13,7 +13,7 @@ if [ -f "$GOVERNANCE_STATE" ]; then
     ROLE=$(python3 -c "import json; d=json.load(open('$GOVERNANCE_STATE')); print(d.get('role','Primary'))" 2>/dev/null)
     echo "✓ MO§ES™ Governance restored"
     echo "  Mode: $MODE | Posture: $POSTURE | Role: $ROLE"
-    echo "  Constitutional governance is active. All tool actions are subject to enforcement."
+    echo "  Governance checks apply to supported plugin hooks and package-managed MCP/CLI state changes."
     echo "  Use /status for full state. Use /govern to change mode."
 else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -25,7 +25,7 @@ else
     echo "  2. /posture scout           Set operational scope"
     echo "  3. /role primary            Set authority level"
     echo ""
-    echo "  Then work normally. Governance enforces automatically."
+    echo "  Then work normally. Supported plugin hooks and package-managed state changes use governance checks."
     echo ""
     echo "  Other commands: /vault /audit /status /hash /docs"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

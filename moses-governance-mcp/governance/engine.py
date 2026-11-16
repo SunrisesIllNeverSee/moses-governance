@@ -512,7 +512,9 @@ if __name__ == "__main__":
     ss.add_argument("--mode", default=None, help="Governance mode alias or canonical name")
     ss.add_argument("--posture", default=None, help="SCOUT | DEFENSE | OFFENSE")
     ss.add_argument("--role", default=None, help="Primary | Secondary | Observer")
-    ss.add_argument("--state", default="./data/governance_state.json", help="Path to governance_state.json")
+    ss.add_argument("--state", default=None, help="Optional governance_state.json path")
+    ss.add_argument("--expected-generation", type=int, required=True)
+    ss.add_argument("--expected-hash", required=True)
 
     # vault_load subcommand — adds a document to vault_documents in state file
     vl = subparsers.add_parser("vault_load", help="Load a document into the active vault")
@@ -520,18 +522,29 @@ if __name__ == "__main__":
     vl.add_argument("--category", default="general", help="Document category")
     vl.add_argument("--content", default="", help="Document content (inline)")
     vl.add_argument("--file", default=None, help="Path to document file to load")
-    vl.add_argument("--state", default="./data/governance_state.json")
+    vl.add_argument("--state", default=None)
+    vl.add_argument("--expected-generation", type=int, required=True)
+    vl.add_argument("--expected-hash", required=True)
 
     # vault_unload subcommand — removes a document from vault_documents
     vu = subparsers.add_parser("vault_unload", help="Remove a document from the active vault")
     vu.add_argument("name", help="Document name to remove")
-    vu.add_argument("--state", default="./data/governance_state.json")
+    vu.add_argument("--state", default=None)
+    vu.add_argument("--expected-generation", type=int, required=True)
+    vu.add_argument("--expected-hash", required=True)
 
     # vault_list subcommand — lists currently loaded vault documents
     vls = subparsers.add_parser("vault_list", help="List loaded vault documents")
-    vls.add_argument("--state", default="./data/governance_state.json")
+    vls.add_argument("--state", default=None)
 
     args = parser.parse_args()
+
+    import os as _os
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+    from governance.store import GovernanceStore as _Store, default_state_path as _default_state_path
+    _state_store = lambda: _Store(_os.path.expandvars(args.state) if args.state else _default_state_path())
 
     if args.command == "translate_mode":
         result = translate_mode(args.mode)
@@ -539,10 +552,7 @@ if __name__ == "__main__":
 
     elif args.command == "check_action":
         if args.state:
-            import os as _os
-            state_path = _os.path.expandvars(args.state)
-            with open(state_path) as f:
-                s = _json.load(f)
+            s = _state_store().read().state
             state = GovernanceState(
                 mode=resolve_mode(s.get("mode", "None (Unrestricted)")),
                 posture=s.get("posture", "SCOUT"),
@@ -562,14 +572,10 @@ if __name__ == "__main__":
             print(f"  {name}")
 
     elif args.command == "set_state":
-        import os as _os
-        state_path = _os.path.expandvars(args.state)
-        # Load existing state or start fresh
-        if _os.path.exists(state_path):
-            with open(state_path) as f:
-                s = _json.load(f)
-        else:
-            s = {"mode": "None (Unrestricted)", "posture": "SCOUT", "role": "Primary", "vault_documents": []}
+        if args.mode is None and args.posture is None and args.role is None:
+            raise SystemExit("Provide at least one of --mode, --posture, or --role.")
+        store = _state_store()
+        s = store.read().state
         # Apply updates — only fields explicitly passed
         _role_map = {"primary": "Primary", "secondary": "Secondary", "observer": "Observer"}
         _posture_map = {"scout": "SCOUT", "defense": "DEFENSE", "offense": "OFFENSE"}
@@ -581,18 +587,13 @@ if __name__ == "__main__":
             s["role"] = _role_map.get(args.role.lower(), args.role)
         if "vault_documents" not in s:
             s["vault_documents"] = []
-        with open(state_path, "w") as f:
-            _json.dump(s, f, indent=2)
-        print(_json.dumps({"updated": True, "state": {k: v for k, v in s.items() if k != "vault_documents"}}))
+        updates = {k: s[k] for k in ("mode", "posture", "role") if (k == "mode" and args.mode is not None) or (k == "posture" and args.posture is not None) or (k == "role" and args.role is not None)}
+        result = store.transition("cli.set_state", updates=updates, expected_generation=args.expected_generation, expected_hash=args.expected_hash, actor="governance-engine-cli", detail={"command": "set_state"})
+        print(_json.dumps({"updated": True, "state": {k: v for k, v in result.state.items() if k != "vault_documents"}, **result.public_metadata()}))
 
     elif args.command == "vault_load":
-        import os as _os
-        state_path = _os.path.expandvars(args.state)
-        if _os.path.exists(state_path):
-            with open(state_path) as f:
-                s = _json.load(f)
-        else:
-            s = {"mode": "None (Unrestricted)", "posture": "SCOUT", "role": "Primary", "vault_documents": []}
+        store = _state_store()
+        s = store.read().state
         if "vault_documents" not in s:
             s["vault_documents"] = []
         # Read content from file if --file provided, else use --content
@@ -603,43 +604,28 @@ if __name__ == "__main__":
         # Remove existing entry with same name before adding
         s["vault_documents"] = [d for d in s["vault_documents"] if d.get("name") != args.name]
         s["vault_documents"].append({"name": args.name, "category": args.category, "content": content})
-        with open(state_path, "w") as f:
-            _json.dump(s, f, indent=2)
-        print(_json.dumps({"loaded": args.name, "category": args.category, "vault_count": len(s["vault_documents"])}))
+        result = store.transition("cli.vault_load", updates={"vault_documents": s["vault_documents"]}, expected_generation=args.expected_generation, expected_hash=args.expected_hash, actor="governance-engine-cli", detail={"name": args.name, "category": args.category})
+        print(_json.dumps({"loaded": args.name, "category": args.category, "vault_count": len(s["vault_documents"]), **result.public_metadata()}))
 
     elif args.command == "vault_unload":
-        import os as _os
-        state_path = _os.path.expandvars(args.state)
-        if _os.path.exists(state_path):
-            with open(state_path) as f:
-                s = _json.load(f)
-        else:
-            print(_json.dumps({"error": "No state file found"}))
-            raise SystemExit(1)
+        store = _state_store()
+        s = store.read().state
         before = len(s.get("vault_documents", []))
         s["vault_documents"] = [d for d in s.get("vault_documents", []) if d.get("name") != args.name]
         after = len(s["vault_documents"])
-        with open(state_path, "w") as f:
-            _json.dump(s, f, indent=2)
-        if after < before:
-            print(_json.dumps({"unloaded": args.name, "vault_count": after}))
-        else:
+        if after == before:
             print(_json.dumps({"error": f"Document '{args.name}' not found in vault"}))
+            raise SystemExit(1)
+        result = store.transition("cli.vault_unload", updates={"vault_documents": s["vault_documents"]}, expected_generation=args.expected_generation, expected_hash=args.expected_hash, actor="governance-engine-cli", detail={"name": args.name})
+        print(_json.dumps({"unloaded": args.name, "vault_count": after, **result.public_metadata()}))
 
     elif args.command == "vault_list":
-        import os as _os
-        state_path = _os.path.expandvars(args.state)
-        if _os.path.exists(state_path):
-            with open(state_path) as f:
-                s = _json.load(f)
-            docs = s.get("vault_documents", [])
-            if docs:
-                for doc in docs:
-                    print(f"  [{doc.get('category','general')}] {doc.get('name','')}")
-            else:
-                print("  Vault is empty.")
+        docs = _state_store().read().state.get("vault_documents", [])
+        if docs:
+            for doc in docs:
+                print(f"  [{doc.get('category','general')}] {doc.get('name','')}")
         else:
-            print("  No governance state file found.")
+            print("  Vault is empty.")
 
     else:
         parser.print_help()

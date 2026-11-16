@@ -8,7 +8,9 @@ Patent Pending: Serial No. 63/877,177
 """
 
 import hashlib
+import fcntl
 import json
+import os
 import time
 from pathlib import Path
 from typing import Optional
@@ -24,28 +26,46 @@ class AuditLedger:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._entries: list[dict] = []
         self._last_hash: str = "0" * 64  # genesis hash
+        self._load_error: dict | None = None
         self._load()
 
     def _load(self):
         """Load existing ledger from disk."""
+        self._entries = []
+        self._last_hash = "0" * 64
+        self._load_error = None
         if not self._path.exists():
             return
         with open(self._path, "r", encoding="utf-8") as f:
-            for line in f:
+            for line_number, line in enumerate(f, start=1):
                 line = line.strip()
                 if not line:
-                    continue
+                    self._load_error = {
+                        "valid": False, "entries_checked": len(self._entries),
+                        "first_failure": len(self._entries), "line": line_number,
+                        "reason": "blank ledger record",
+                    }
+                    return
                 try:
                     entry = json.loads(line)
+                    if not isinstance(entry, dict):
+                        raise ValueError("ledger record must be a JSON object")
                     self._entries.append(entry)
                     self._last_hash = entry.get("hash", self._last_hash)
-                except json.JSONDecodeError:
-                    continue
+                except (json.JSONDecodeError, ValueError) as exc:
+                    self._load_error = {
+                        "valid": False, "entries_checked": len(self._entries),
+                        "first_failure": len(self._entries), "line": line_number,
+                        "reason": f"malformed ledger record: {exc}",
+                    }
+                    return
 
     def _save_entry(self, entry: dict):
         """Append single entry to ledger file."""
         with open(self._path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
 
     def log_action(
         self,
@@ -72,29 +92,31 @@ class AuditLedger:
         Returns:
             The complete audit entry with hash.
         """
-        entry = {
-            "id": len(self._entries),
-            "timestamp": time.time(),
-            "iso_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "component": component,
-            "action": action,
-            "agent": agent,
-            "governance": {
-                "mode": governance_mode,
-                "posture": posture,
-                "role": role,
-            },
-            "detail": detail,
-            "previous_hash": self._last_hash,
-        }
-
-        # Hash includes previous hash → creates chain
-        entry["hash"] = self._hash_entry(entry)
-        self._last_hash = entry["hash"]
-        self._entries.append(entry)
-        self._save_entry(entry)
-
-        return entry
+        lock_path = self._path.with_suffix(self._path.suffix + ".lock")
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with lock_path.open("a+") as lock:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+            self._load()
+            integrity = self.verify_integrity()
+            if not integrity["valid"]:
+                raise ValueError(f"Refusing to append to invalid audit ledger: {integrity.get('reason')}")
+            entry = {
+                "id": len(self._entries),
+                "timestamp": time.time(),
+                "iso_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "component": component,
+                "action": action,
+                "agent": agent,
+                "governance": {"mode": governance_mode, "posture": posture, "role": role},
+                "detail": detail,
+                "previous_hash": self._last_hash,
+            }
+            entry["hash"] = self._hash_entry(entry)
+            self._save_entry(entry)
+            self._entries.append(entry)
+            self._last_hash = entry["hash"]
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+            return entry
 
     def _hash_entry(self, entry: dict) -> str:
         """SHA-256 hash of an audit entry. Deterministic serialization."""
@@ -105,14 +127,22 @@ class AuditLedger:
 
     def get_recent(self, n: int = 20) -> list[dict]:
         """Return the last N audit entries."""
+        self._load()
         return self._entries[-n:]
+
+    def get_all(self) -> list[dict]:
+        """Return a fresh, complete view of the ledger."""
+        self._load()
+        return list(self._entries)
 
     def get_since(self, entry_id: int) -> list[dict]:
         """Return entries after a given ID."""
+        self._load()
         return [e for e in self._entries if e["id"] > entry_id]
 
     def get_by_agent(self, agent: str, n: int = 20) -> list[dict]:
         """Return recent entries for a specific agent."""
+        self._load()
         agent_entries = [e for e in self._entries if e.get("agent") == agent]
         return agent_entries[-n:]
 
@@ -123,8 +153,18 @@ class AuditLedger:
 
         Returns: {"valid": bool, "entries_checked": int, "first_failure": int | None}
         """
+        self._load()
+        if self._load_error:
+            return dict(self._load_error)
         prev_hash = "0" * 64
         for i, entry in enumerate(self._entries):
+            if entry.get("id") != i:
+                return {
+                    "valid": False,
+                    "entries_checked": i,
+                    "first_failure": i,
+                    "reason": "entry id mismatch",
+                }
             # Check previous hash linkage
             if entry.get("previous_hash") != prev_hash:
                 return {
@@ -221,6 +261,13 @@ def format_for_onchain(
     return memo
 
 
+def default_ledger_path() -> Path:
+    configured = os.environ.get("MOSES_GOVERNANCE_AUDIT_FILE")
+    if configured:
+        return Path(os.path.expandvars(configured)).expanduser().resolve()
+    return Path(__file__).resolve().parent.parent / "data" / "audit_ledger.jsonl"
+
+
 # ── CLI Entry Point ────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -238,16 +285,16 @@ if __name__ == "__main__":
     log_parser.add_argument("--role", default="")
     log_parser.add_argument("--agent", default="")
     log_parser.add_argument("--detail", default="{}")
-    log_parser.add_argument("--ledger", default="./data/audit_ledger.jsonl")
+    log_parser.add_argument("--ledger", default=str(default_ledger_path()))
 
     # verify subcommand
     verify_parser = subparsers.add_parser("verify", help="Verify chain integrity")
-    verify_parser.add_argument("--ledger", default="./data/audit_ledger.jsonl")
+    verify_parser.add_argument("--ledger", default=str(default_ledger_path()))
 
     # recent subcommand
     recent_parser = subparsers.add_parser("recent", help="Show recent entries")
     recent_parser.add_argument("--n", type=int, default=10)
-    recent_parser.add_argument("--ledger", default="./data/audit_ledger.jsonl")
+    recent_parser.add_argument("--ledger", default=str(default_ledger_path()))
 
     args = parser.parse_args()
 

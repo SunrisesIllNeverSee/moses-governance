@@ -19,7 +19,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 GOVERNANCE_STATE="$PROJECT_ROOT/data/governance_state.json"
-AUDIT_LEDGER="$PROJECT_ROOT/data/audit_default.jsonl"
+AUDIT_LEDGER="$PROJECT_ROOT/data/audit_ledger.jsonl"
 
 COMPONENT="${1:-post-execute}"
 ACTION="${2:-aar_check}"

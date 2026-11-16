@@ -5,8 +5,8 @@
 # © 2026 Ello Cello LLC. Patent Pending: Serial No. 63/877,177
 
 CLAUDE_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
-AUDIT_LEDGER="${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
+GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/moses-governance-mcp/data/governance_state.json"
+AUDIT_LEDGER="${CLAUDE_PLUGIN_ROOT}/moses-governance-mcp/data/audit_ledger.jsonl"
 
 if [ -f "$GOVERNANCE_STATE" ]; then
     MODE=$(python3 -c "import json; print(json.load(open('$GOVERNANCE_STATE')).get('mode','unknown'))" 2>/dev/null)

@@ -1,5 +1,5 @@
 ---
-description: Set the active MO§ES™ governance mode. Writes mode to state file so all hooks enforce it immediately.
+description: Set the active MO§ES™ governance mode using the shared, generation-checked state store.
 argument-hint: [high-security|high-integrity|creative|research|self-growth|problem-solving|idk|unrestricted]
 ---
 
@@ -46,35 +46,33 @@ Pick a mode:
 
 When invoked with a mode argument, execute these steps in order:
 
-**Step 1 — Persist the mode** (this wires enforcement — do not skip):
+**Step 1 — Read the current state generation and hash:**
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status
+```
+Use the returned `generation` and `state_hash` for this write. If the write reports stale state, read status again and reassess.
+
+**Step 2 — Persist the mode through the shared boundary:**
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" set_state \
   --mode "$ARGUMENTS" \
-  --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
-```
-
-**Step 2 — Log to audit trail**:
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
-  --component "governance" \
-  --action "mode_change" \
-  --mode "$ARGUMENTS" \
-  --ledger "${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
+  --expected-generation [GENERATION] \
+  --expected-hash [STATE_HASH]
 ```
 
 **Step 3 — Confirm to operator**:
 ```
 ✓ Governance mode set: [CANONICAL MODE NAME]
 Active constraints: [list 2-3 key constraints]
-Hook enforcement active. All subsequent tool actions evaluated under this mode.
-Audit entry logged.
+The transition is recorded in the shared hash-chained history. Hook coverage applies only to supported host tool paths.
 ```
 
 When invoked with no argument, run:
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" translate_mode \
-  "$(python3 -c "import json; print(json.load(open('${CLAUDE_PLUGIN_ROOT}/data/governance_state.json')).get('mode','None (Unrestricted)'))")"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status
 ```
 Display current mode + its active constraints.
+
+Without a trusted operator identity provider, the shared policy boundary accepts only High Security as a mode change. Other mode changes require the operator-only identity setup described in the MCP README; a fresh generation/hash alone is not operator authorization.
 
 See `references/modes.md` for full constraint definitions.

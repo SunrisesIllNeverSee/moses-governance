@@ -31,12 +31,14 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
+from .store import GovernanceStore, GovernanceStoreError
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 
-DATA_DIR = Path(__file__).parent.parent / "data"
+_store = GovernanceStore()
+DATA_DIR = _store.data_root
 
 
 def _data(filename: str) -> Path:
@@ -118,69 +120,21 @@ def _verify_operator_sig(operator_signature: str, proposal_id: str) -> tuple[boo
       reject all others. This allows zero-downtime migration.
     - If secret IS set: only accept valid hmac: signatures. Reject legacy format.
     """
-    secret = _get_operator_secret()
-
-    if not operator_signature or not operator_signature.strip():
-        return False, "Empty operator signature."
-
-    if secret:
-        # Strict mode — secret is configured
-        if not operator_signature.startswith(_SIG_PREFIX):
-            if operator_signature.startswith(_LEGACY_PREFIX):
-                return False, (
-                    "Legacy plain-text signature rejected. "
-                    "MOSES_OPERATOR_SECRET is set — use make_operator_sig() to generate a valid HMAC signature."
-                )
-            return False, "Unrecognized signature format. Expected 'hmac:<digest>'."
-
-        # Extract submitted digest
-        submitted_digest = operator_signature[len(_SIG_PREFIX):]
-
-        # We need to try all known operator IDs since we don't store which ID was used.
-        # The canonical approach: the signature embeds the operator_id implicitly via HMAC.
-        # We verify by re-deriving — caller must present the same operator_id used to sign.
-        # Since we don't have operator_id here, we accept any valid HMAC over ":<proposal_id>"
-        # as a secondary fallback, or verify the full payload by accepting the signature directly.
-        #
-        # Implementation: constant-time comparison against HMAC of just the proposal_id,
-        # allowing the operator_id to be embedded or omitted. For strict mode, require
-        # the full "operator_id:proposal_id" payload — but since the caller doesn't pass
-        # operator_id to this function, we verify against a proposal-only payload as well.
-        # This is a known limitation — see COWORK-LOG for v2.0 recommendation.
-        payload_proposal_only = f":{proposal_id}"
-        expected_proposal_only = hmac.new(
-            secret.encode("utf-8"), payload_proposal_only.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
-
-        if hmac.compare_digest(submitted_digest, expected_proposal_only):
-            return True, "valid:hmac-proposal-key"
-
-        # Also accept full "operator_id:proposal_id" format — iterate known prefixes
-        # In practice the operator just passes the output of make_operator_sig() verbatim.
-        # We can't know the operator_id here, so we accept any valid HMAC as long as
-        # the digest is well-formed (64-char hex) and passes length check.
-        # Real enforcement of operator identity belongs in the auth layer (v2.0).
-        if len(submitted_digest) == 64 and all(c in "0123456789abcdef" for c in submitted_digest):
-            # We can't verify operator_id without it — pass structural check, log as unverified-id
-            # This is intentionally permissive pending auth layer; the HMAC still requires the secret.
-            return True, "valid:hmac-structure-ok (operator_id unverified — upgrade to auth layer in v2.0)"
-
-        return False, "HMAC signature verification failed. Wrong secret or tampered proposal_id."
-
-    else:
-        # No secret configured — migration mode
-        if operator_signature.startswith(_LEGACY_PREFIX):
-            return True, "valid:legacy (MOSES_OPERATOR_SECRET not set — set it to enforce HMAC)"
-        if operator_signature.startswith(_SIG_PREFIX):
-            return True, "valid:hmac-accepted-no-secret (cannot verify without MOSES_OPERATOR_SECRET)"
-        return False, (
-            "Unrecognized signature format. "
-            "Expected 'operator:<id>' (legacy) or 'hmac:<digest>' (HMAC). "
-            "Set MOSES_OPERATOR_SECRET and use make_operator_sig() for production."
-        )
+    del proposal_id
+    if not isinstance(operator_signature, str) or not operator_signature.strip():
+        return False, "Missing or malformed operator signature."
+    return False, "Privileged approval disabled: trusted operator identity provider is not configured."
 
 
 def _load_json(path: Path) -> dict:
+    try:
+        relative = path.resolve().relative_to(DATA_DIR.resolve()).as_posix()
+    except ValueError:
+        relative = None
+    if relative is not None:
+        data = _store.read_resource(relative)
+        if data is not None:
+            return json.loads(data)
     if not path.exists():
         return {}
     return json.loads(path.read_text())
@@ -199,26 +153,22 @@ def _load_ledger_entries(
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
 ) -> list[dict]:
-    if not ledger_path.exists():
-        return []
+    from .audit import AuditLedger
+    ledger = AuditLedger(ledger_path)
+    integrity = ledger.verify_integrity()
+    if not integrity.get("valid"):
+        raise GovernanceStoreError(f"Audit analysis refused: malformed or invalid ledger ({integrity.get('reason', 'unknown')}).")
     entries = []
-    with ledger_path.open() as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                entry = json.loads(line)
-                if start_time or end_time:
-                    ts = entry.get("timestamp", 0)
-                    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
-                    if start_time and dt < start_time:
-                        continue
-                    if end_time and dt > end_time:
-                        continue
-                entries.append(entry)
-            except json.JSONDecodeError:
-                continue
+    for entry in ledger.get_all():
+        ts = entry.get("timestamp")
+        if not isinstance(ts, (int, float)):
+            raise GovernanceStoreError("Audit analysis refused: ledger timestamp is malformed.")
+        dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+        if start_time and dt < start_time:
+            continue
+        if end_time and dt > end_time:
+            continue
+        entries.append(entry)
     return entries
 
 
@@ -232,6 +182,8 @@ def analyze_audit_trail(
     min_confidence: float = 0.8,
     ledger_name: str = "audit_default.jsonl",
     exclude_tags: Optional[list[str]] = None,
+    expected_generation: int | None = None,
+    expected_hash: str | None = None,
 ) -> dict:
     """
     Read the audit history and generate constitutional amendment proposals.
@@ -317,6 +269,7 @@ def analyze_audit_trail(
             stats[key]["action_types"][action] += 1
 
     proposals = []
+    resource_updates: dict[str, str] = {}
     for (category, name), data in stats.items():
         total = data["total"]
         if total < 5:
@@ -391,9 +344,19 @@ def analyze_audit_trail(
             }
             proposals.append(full_prop)
 
-            # Write to pending/
-            out_path = _proposals_dir("pending") / f"{prop_id}.json"
-            out_path.write_text(json.dumps(full_prop, indent=2))
+            resource_updates[f"proposals/pending/{prop_id}.json"] = json.dumps(full_prop, ensure_ascii=False, indent=2)
+
+    metadata = {}
+    if resource_updates:
+        if expected_generation is None or expected_hash is None:
+            return {"error": "Proposal creation requires expected_generation and expected_hash; nothing was saved.", "proposals": proposals, "entries_analyzed": len(entries), "entries_excluded_by_tag": excluded_count}
+        try:
+            committed = _store.transition("meta.analyze_trail", expected_generation=expected_generation,
+                expected_hash=expected_hash, resource_updates=resource_updates, actor="mcp-session",
+                detail={"proposal_ids": [p["id"] for p in proposals]})
+            metadata = committed.public_metadata()
+        except GovernanceStoreError as exc:
+            return {"error": str(exc), "proposals": proposals, "entries_analyzed": len(entries), "entries_excluded_by_tag": excluded_count}
 
     tag_note = (
         f" ({excluded_count} entries excluded by tag filter: {exclude_tags})"
@@ -401,6 +364,7 @@ def analyze_audit_trail(
     )
     return {
         "proposals": proposals,
+        **metadata,
         "entries_analyzed": len(entries),
         "entries_excluded_by_tag": excluded_count,
         "analysis_summary": (
@@ -425,13 +389,14 @@ def list_proposals(status: str = "pending") -> dict:
     if status not in ("pending", "approved", "rejected"):
         return {"error": f"Unknown status: {status!r}. Use: pending | approved | rejected"}
 
-    props_dir = _proposals_dir(status)
     proposals = []
-    for f in sorted(props_dir.glob("*.json")):
+    for rel in _store.list_resources(f"proposals/{status}/"):
         try:
-            proposals.append(json.loads(f.read_text()))
-        except Exception:
-            continue
+            raw = _store.read_resource(rel)
+            if raw is not None:
+                proposals.append(json.loads(raw))
+        except Exception as exc:
+            return {"error": f"Malformed proposal resource {rel}: {exc}", "proposals": proposals, "count": len(proposals), "status": status}
 
     return {"proposals": proposals, "count": len(proposals), "status": status}
 
@@ -447,9 +412,9 @@ def get_proposal(proposal_id: str) -> dict:
     Returns the proposal dict, or {"error": "not found"}.
     """
     for status in ("pending", "approved", "rejected"):
-        path = _proposals_dir(status) / f"{proposal_id}.json"
-        if path.exists():
-            return json.loads(path.read_text())
+        raw = _store.read_resource(f"proposals/{status}/{proposal_id}.json")
+        if raw is not None:
+            return json.loads(raw)
     return {"error": f"Proposal {proposal_id!r} not found"}
 
 
@@ -565,29 +530,31 @@ def apply_amendment(proposal_id: str, operator_signature: str) -> dict:
 # reject_proposal
 # ---------------------------------------------------------------------------
 
-def reject_proposal(proposal_id: str, reason: str) -> dict:
+def reject_proposal(proposal_id: str, reason: str, expected_generation: int | None = None, expected_hash: str | None = None) -> dict:
     """
     Reject a pending proposal with a reason. Moves it to rejected/.
 
     Returns:
         {"success": bool, "message": str}
     """
-    proposal_path = _proposals_dir("pending") / f"{proposal_id}.json"
-    if not proposal_path.exists():
+    proposal = get_proposal(proposal_id)
+    if "error" in proposal or proposal.get("status") != "pending":
         return {"success": False, "message": f"Proposal {proposal_id!r} not found in pending."}
-
-    proposal = json.loads(proposal_path.read_text())
     proposal["status"] = "rejected"
     proposal["rejected"] = _now_iso()
     proposal["rejection_reason"] = reason
-
-    rejected_path = _proposals_dir("rejected") / f"{proposal_id}.json"
-    rejected_path.write_text(json.dumps(proposal, indent=2))
-    proposal_path.unlink()
+    if expected_generation is None or expected_hash is None:
+        return {"success": False, "message": "Protected write requires expected_generation and expected_hash."}
+    try:
+        snap = _store.transition("meta.reject_proposal", expected_generation=expected_generation, expected_hash=expected_hash,
+            resource_updates={f"proposals/rejected/{proposal_id}.json": json.dumps(proposal, ensure_ascii=False, indent=2), f"proposals/pending/{proposal_id}.json": None},
+            actor="operator-cli", detail={"proposal_id": proposal_id, "reason": reason})
+    except GovernanceStoreError as exc:
+        return {"success": False, "message": str(exc)}
 
     return {
         "success": True,
-        "message": f"Proposal {proposal_id!r} rejected. Reason: {reason}",
+        "message": f"Proposal {proposal_id!r} rejected. Reason: {reason}", **snap.public_metadata(),
     }
 
 

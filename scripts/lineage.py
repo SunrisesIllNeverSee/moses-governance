@@ -5,7 +5,7 @@ Provisional Patent Serial No. 63/877,177 | DOI: https://zenodo.org/records/18792
 
 Usage:
   python3 lineage.py init          ← Anchor genesis to origin filing
-  python3 lineage.py verify        ← Confirm chain traces to origin
+  python3 lineage.py verify        ← Verify package-local lineage consistency
   python3 lineage.py badge         ← Output shareable lineage proof
   python3 lineage.py check         ← Quick pass/fail lineage check
 """
@@ -14,11 +14,15 @@ import hashlib
 import json
 import os
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "moses-governance-mcp"))
+from governance.store import GovernanceStore
 from datetime import datetime, timezone
 
 # ─── Origin-Cycle Anchor ────────────────────────────────────────────────────
-# Derived from the sovereign filing. Non-replicable without the originating
-# patent serial and DOI. Any chain not rooted here fails verification.
+# Derived from the supplied filing identifiers. This marker is not an
+# independent attestation of the filing or of external chain custody.
 
 _ORIGIN_COMPONENTS = (
     "MO§ES™",
@@ -33,15 +37,15 @@ MOSES_ANCHOR = hashlib.sha256(
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
 
-_PLUGIN_ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT", os.path.join(os.path.dirname(__file__), ".."))
-LEDGER_PATH = os.path.join(_PLUGIN_ROOT, "data", "audit_ledger.jsonl")
-LINEAGE_PATH = os.path.join(_PLUGIN_ROOT, "data", "lineage.json")
-STATE_PATH = os.path.join(_PLUGIN_ROOT, "data", "governance_state.json")
+_store = GovernanceStore()
+LEDGER_PATH = str(_store.data_root / "audit_ledger.jsonl")
+LINEAGE_PATH = str(_store.data_root / "lineage.json")
+STATE_PATH = str(_store.state_path)
 
 
 def ensure_dirs():
-    for path in [LEDGER_PATH, LINEAGE_PATH]:
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+    # GovernanceStore creates its own data directory when committing.
+    return None
 
 
 def canonical(data: dict) -> str:
@@ -53,15 +57,15 @@ def compute_hash(data: dict) -> str:
 
 
 def load_lineage() -> dict | None:
-    if not os.path.exists(LINEAGE_PATH):
-        return None
-    with open(LINEAGE_PATH) as f:
-        return json.load(f)
+    raw = _store.read_resource("lineage.json")
+    return json.loads(raw) if raw else None
 
 
 def save_lineage(record: dict):
-    with open(LINEAGE_PATH, "w") as f:
-        json.dump(record, f, indent=2)
+    snapshot = _store.read()
+    _store.transition("lineage.initialize", expected_generation=snapshot.generation,
+        expected_hash=snapshot.state_hash, resource_updates={"lineage.json": json.dumps(record, ensure_ascii=False, indent=2)},
+        actor="lineage-cli", detail={"genesis_hash": record.get("genesis_hash")})
 
 
 # ─── Commands ────────────────────────────────────────────────────────────────
@@ -99,14 +103,8 @@ def cmd_init(_args):
     }
     save_lineage(record)
 
-    # Write genesis as first ledger entry if ledger is empty
-    ledger_empty = (
-        not os.path.exists(LEDGER_PATH) or os.path.getsize(LEDGER_PATH) == 0
-    )
-    if ledger_empty:
-        with open(LEDGER_PATH, "a") as f:
-            f.write(json.dumps(genesis_payload) + "\n")
-        print(f"[LINEAGE] Genesis written to ledger.")
+    # The canonical transition chain records initialization. Do not inject a
+    # differently shaped lineage record into the strict audit JSONL ledger.
 
     print(f"[LINEAGE] Origin-cycle anchor established.")
     print(f"  Anchor : {MOSES_ANCHOR[:24]}...")
@@ -114,8 +112,8 @@ def cmd_init(_args):
     print(f"  Patent : 63/877,177")
     print(f"  DOI    : https://zenodo.org/records/18792459")
     print()
-    print("[LINEAGE] All subsequent audit entries inherit this lineage.")
-    print("[LINEAGE] Chains without this anchor cannot verify. Custody confirmed.")
+    print("[LINEAGE] The marker is recorded in the package-local transition history.")
+    print("[LINEAGE] This check does not independently authenticate external custody.")
 
 
 def cmd_verify(_args):
@@ -168,16 +166,18 @@ def cmd_verify(_args):
         print(f"  Found   : {record.get('lineage_anchor', 'MISSING')[:24]}...")
         sys.exit(1)
 
-    # ── Layer 1: Live ledger — traces back to genesis ─────────────────────────
-    if os.path.exists(LEDGER_PATH):
-        with open(LEDGER_PATH) as f:
-            lines = [l.strip() for l in f if l.strip()]
-        if lines:
-            first = json.loads(lines[0])
-            if first.get("previous_hash") != MOSES_ANCHOR:
-                print("[LINEAGE FAIL] Ledger genesis does not trace to origin anchor.")
-                print("  Chain custody broken — this is not a sovereign implementation.")
-                sys.exit(1)
+    # The shared store verifies its own transition history. This check does
+    # not claim that an external filing or host action has been independently
+    # authenticated by the package.
+    try:
+        integrity = _store.verify()
+        stored_lineage = load_lineage()
+    except Exception as exc:
+        print(f"[LINEAGE FAIL] Governance store could not be verified: {exc}")
+        sys.exit(1)
+    if not integrity.get("valid") or stored_lineage != record:
+        print("[LINEAGE FAIL] Governance transition history or lineage resource is inconsistent.")
+        sys.exit(1)
 
     print(f"[LINEAGE OK] Layer  0: anchor traces to origin-cycle filing.")
     print(f"  Anchor : {MOSES_ANCHOR[:24]}...")
@@ -185,7 +185,7 @@ def cmd_verify(_args):
     print(f"  Patent : {record['patent_serial']}")
     print(f"  Anchored: {record['anchored_at']}")
     print()
-    print("[LINEAGE OK] Three-layer custody confirmed: archival → anchor → live ledger.")
+    print("[LINEAGE OK] Package-local transition history and lineage resource verified.")
 
 
 def cmd_badge(_args):
@@ -212,8 +212,7 @@ def cmd_badge(_args):
         print(f"  {k:<18}: {v}")
     print("─" * 60)
     print()
-    print("  Agents carrying this lineage are sovereign implementations.")
-    print("  Copies lacking this anchor cannot establish chain integrity.")
+    print("  This badge reports a package-local marker and is not an external custody attestation.")
     print("─" * 60)
 
 
@@ -224,13 +223,11 @@ def cmd_check(_args):
         sys.exit(1)
     if record.get("lineage_anchor") != MOSES_ANCHOR:
         sys.exit(1)
-    if os.path.exists(LEDGER_PATH):
-        with open(LEDGER_PATH) as f:
-            lines = [l.strip() for l in f if l.strip()]
-        if lines:
-            first = json.loads(lines[0])
-            if first.get("previous_hash") != MOSES_ANCHOR:
-                sys.exit(1)
+    try:
+        if not _store.verify().get("valid") or load_lineage() != record:
+            sys.exit(1)
+    except Exception:
+        sys.exit(1)
     print("LINEAGE:OK")
     sys.exit(0)
 
@@ -274,7 +271,7 @@ def cmd_status(_args):
 
     print("─" * 60)
     overall = arch_ok and bool(record) and record.get("lineage_anchor") == MOSES_ANCHOR
-    print(f"  Status : {'SOVEREIGN CUSTODY CONFIRMED' if overall else 'INCOMPLETE — see above'}")
+    print(f"  Status : {'PACKAGE MARKER PRESENT' if overall else 'INCOMPLETE — see above'}")
     print("─" * 60)
 
 
@@ -312,7 +309,7 @@ def cmd_attest(_args):
         "genesis_hash": record["genesis_hash"],
         "archival_head": arch_head,
         "anchored_at": record["anchored_at"],
-        "lineage_status": "SOVEREIGN",
+        "lineage_status": "PACKAGE_MARKER_PRESENT",
         "verification": "python3 lineage.py verify",
     }
     attest["attestation_hash"] = hashlib.sha256(

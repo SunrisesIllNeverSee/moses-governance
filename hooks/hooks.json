@@ -14,24 +14,14 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": ".*",
         "hooks": [
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-execute.sh\""
           }
         ],
-        "description": "MO§ES™ enforcement — evaluate action against governance rules, block if prohibited"
-      },
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pre-execute.sh\""
-          }
-        ],
-        "description": "MO§ES™ enforcement — verify file modifications comply with active governance"
+        "description": "MO§ES™ policy boundary — evaluate supported tool actions and fail closed if state cannot be verified"
       }
     ],
     "PostToolUse": [

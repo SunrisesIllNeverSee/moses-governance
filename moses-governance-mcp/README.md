@@ -1,16 +1,17 @@
 # MO§ES™ MCP Governance Server
 
-**Constitutional governance engine for AI agents.**
+**Governance checks for supported host hooks and package-managed MCP/CLI state changes.**
 © 2026 Ello Cello LLC — Patent pending: Serial No. 63/877,177
 
 ---
 
 ## What This Is
 
-A FastMCP server that enforces the MO§ES™ governance framework on any AI agent. Any model (Claude, GPT, etc.) that routes through this server operates under constitutional constraints — behavioral modes, role hierarchy, posture controls, and a cryptographic audit trail.
+A FastMCP server that exposes MO§ES™ governance state and policy checks. Its package-managed state changes use a shared, generation-checked SQLite boundary. Host hooks cover only the tool paths the host exposes; arbitrary shell commands, external applications, and unsupported file operations cannot be intercepted.
 
 - **13 MCP tools** across governance, vault, and audit categories
-- **Append-only JSONL audit ledger** with SHA-256 chaining
+- **Append-only JSONL audit ledger** with SHA-256 chaining and malformed-record reporting
+- **Restart-safe SQLite state** with atomic transitions, generation/hash checks, and a verified JSON recovery export
 - **Cryptographic session hashes** — config fingerprint, content integrity, Solana memo anchor
 - **Model-agnostic** — any agent can be governed through it
 - **Discoverable** via `.well-known/mcp-server-card` (MCP Server Cards spec)
@@ -53,15 +54,25 @@ Add `.mcp.json` to your workspace (already included). Claude Code will auto-disc
 
 ---
 
+## State, Approval, and Recovery
+
+`governance_state.json.sqlite3` beside `data/governance_state.json` is the canonical state and transition store. The JSON file is a compatibility export. Do not edit it by hand while the store exists; use the package tools or CLI. Every supported mutation must include the `generation` and `state_hash` returned by `govern_get_status` (the CLI status command prints the same values). Stale writes fail and must be reviewed against a fresh status.
+
+Run `python3 scripts/governance_store.py verify` to verify the transition and resource hashes, `status` to inspect the current snapshot, `export` to rebuild the JSON compatibility view and resource files from the verified store, and `backup --output /secure/path/governance.sqlite3` to create a consistent SQLite backup. For recovery, stop all package clients, preserve the existing files, replace the canonical `.sqlite3` database with a verified backup, then run `verify` and `export` before resuming. If the database is lost while an exported state claims non-genesis transition history, the package fails closed; restore a verified database backup before resuming writes.
+
+Privileged amendment apply/rollback and direct edits to constitution resources are disabled because this source does not provide a trusted operator identity channel. The requesting model cannot mint its own approval. Without an operator-only identity and credential path, changes that increase permissions are also rejected: posture cannot rise from SCOUT to DEFENSE/OFFENSE, role cannot rise in authority, and mode changes are limited to High Security. Safe demotions and High Security recovery remain available. Configure and test an operator-only identity path before enabling any privileged approval or escalation.
+
+The supported Codex `PreToolUse` event shape is read from stdin (`tool_name` and `tool_input`), and denials use the structured hook response. Coverage is limited to tools intercepted by the configured hook. Actions through unhooked hosts, arbitrary shell programs, external editors, or direct writes to other applications are outside this package's enforcement boundary.
+
 ## Tools Reference
 
 ### Governance
 
 | Tool | Description |
 |---|---|
-| `govern_set_mode` | Set active mode (accepts aliases: `idk`, `high-security`, etc.) |
-| `govern_set_posture` | Set posture: `SCOUT` / `DEFENSE` / `OFFENSE` |
-| `govern_set_role` | Set role: `Primary` / `Secondary` / `Observer` |
+| `govern_set_mode` | Set active mode; without a trusted operator identity, only High Security is accepted |
+| `govern_set_posture` | Set posture: `SCOUT` / `DEFENSE` / `OFFENSE`; permission increases require a trusted operator identity |
+| `govern_set_role` | Set role: `Primary` / `Secondary` / `Observer`; authority increases require a trusted operator identity |
 | `govern_check_action` | Check if an action is permitted under current governance |
 | `govern_get_status` | Return full current GovernanceState |
 | `govern_assemble_context` | Build governed context payload for an agent |

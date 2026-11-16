@@ -34,6 +34,10 @@ SKILL-full.md
 cowork.zip
 governance.plugin
 governance/
+!moses-governance-mcp/governance/
+moses-governance-mcp/governance/*
+!moses-governance-mcp/governance/*.py
+!moses-governance-mcp/governance/__init__.py
 data/lineage.json
 
 # Skylos scan output
