@@ -24,7 +24,7 @@ def _tool_action(tool_name: str, tool_input: dict) -> tuple[bool, str]:
                  "vault_list", "audit_verify", "audit_recent", "audit_hash_session",
                  "meta_list_proposals", "meta_constitution_status"}
     leaf = name.rsplit("__", 1)[-1]
-    if name in read_only or (name.startswith("mcp__") and leaf in read_only):
+    if name in read_only or (name.startswith("mcp__moses_governance__") and leaf in read_only):
         return False, ""
     if name.startswith("mcp__") and leaf in {"govern_set_mode", "govern_set_posture", "govern_set_role"}:
         # Governance configuration is the control-plane recovery path. Its
@@ -41,8 +41,13 @@ def _tool_action(tool_name: str, tool_input: dict) -> tuple[bool, str]:
         safe_commands = {"pwd", "ls", "cat", "head", "tail", "rg"}
         if words and words[0] in safe_commands:
             return False, ""
-        if len(words) >= 2 and words[0] == "git" and words[1] in {"status", "diff", "log", "show", "branch", "rev-parse"}:
-            if not any(arg in {"-c", "--exec-path", "--config-env"} for arg in words[1:]):
+        # Accept only harmless git -C <path> prefixes before known read commands.
+        # Do not widen the allowlist for arbitrary git global options.
+        git_words = words[:]
+        while len(git_words) >= 3 and git_words[:2] == ["git", "-C"]:
+            git_words = ["git", *git_words[3:]]
+        if len(git_words) >= 2 and git_words[0] == "git" and git_words[1] in {"status", "diff", "log", "show", "branch", "rev-parse"}:
+            if not any(arg in {"-c", "--exec-path", "--config-env", "--output"} for arg in words[1:]):
                 return False, ""
         if words and words[0] == "sed" and all(arg not in {"-i", "--in-place"} and not arg.startswith("-i") for arg in words[1:]):
             return False, ""
@@ -94,6 +99,13 @@ def main() -> int:
         decision = check_action_permitted(action, state)
         if not decision.get("permitted", False):
             reason = decision.get("reason") or "Action blocked by governance policy."
+        elif decision.get("conditions"):
+            # The engine reports confirmation requirements as conditions, but
+            # neither this event nor the host supplies authenticated approval.
+            # A conditional permit MUST NOT silently turn into an allow.
+            reason = "Unfulfilled governance conditions: " + "; ".join(
+                str(condition) for condition in decision["conditions"]
+            )
     except Exception as exc:
         reason = f"Governance state could not be verified; protected write blocked ({type(exc).__name__})."
 

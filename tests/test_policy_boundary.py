@@ -196,6 +196,41 @@ class PolicyBoundaryTests(unittest.TestCase):
             self.store.transition("constitution.direct_write", expected_generation=snap.generation,
                 expected_hash=snap.state_hash, resource_updates={"constitution.json": '{"version":"changed"}'})
 
+    def test_h01_conditions_never_silently_authorize_actions(self):
+        """DEFENSE and High Security approvals require verified authority."""
+        for posture, mode, tool_name, payload in (
+            ("DEFENSE", "None (Unrestricted)", "mcp__mock__send", {"message": "synthetic"}),
+            ("DEFENSE", "None (Unrestricted)", "mcp__mock__transfer", {"amount": 10}),
+            ("OFFENSE", "High Security", "Bash", {"command": "rm -f /synthetic/mock.txt"}),
+        ):
+            state = Path(self.temp.name) / f"{posture}-{len(tool_name)}-{len(str(payload))}.json"
+            state.write_text(json.dumps({"mode": mode, "posture": posture, "role": "Primary", "vault_documents": []}))
+            env = {**os.environ, "MOSES_GOVERNANCE_STATE_FILE": str(state),
+                   "MOSES_GOVERNANCE_AUDIT_FILE": str(Path(self.temp.name) / "empty_audit.jsonl")}
+            event = {"tool_name": tool_name, "tool_input": payload}
+            result = subprocess.run([sys.executable, str(ROOT / "scripts" / "pre_tool_use.py")],
+                input=json.dumps(event), text=True, capture_output=True, env=env)
+            self.assertEqual(result.returncode, 0)
+            output = json.loads(result.stdout)["hookSpecificOutput"]
+            self.assertEqual(output["permissionDecision"], "deny", event)
+            self.assertIn("Unfulfilled governance conditions", output["permissionDecisionReason"])
+
+    def test_h01_untrusted_read_named_tool_cannot_bypass_scout(self):
+        from scripts.pre_tool_use import _tool_action
+        protected, detail = _tool_action("mcp__untrusted__read", {"operation": "delete", "id": "synthetic"})
+        self.assertTrue(protected, detail)
+        event = {"tool_name": "mcp__untrusted__read", "tool_input": {"operation": "delete", "id": "synthetic"}}
+        env = {**os.environ, "MOSES_GOVERNANCE_STATE_FILE": str(self.state_file),
+               "MOSES_GOVERNANCE_AUDIT_FILE": str(Path(self.temp.name) / "audit_empty.jsonl")}
+        result = subprocess.run([sys.executable, str(ROOT / "scripts" / "pre_tool_use.py")],
+            input=json.dumps(event), text=True, capture_output=True, env=env)
+        self.assertEqual(json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"], "deny")
+
+    def test_h01_git_c_status_is_read_only_but_git_write_is_not(self):
+        from scripts.pre_tool_use import _tool_action
+        self.assertFalse(_tool_action("Bash", {"command": "git -C /synthetic/repo status"})[0])
+        self.assertTrue(_tool_action("Bash", {"command": "git -C /synthetic/repo clean -fd"})[0])
+
     def test_hook_shell_allowlist_rejects_write_capable_flags(self):
         env = {**os.environ, "MOSES_GOVERNANCE_STATE_FILE": str(self.state_file)}
         for command in ("git clean -fd", "sed -i s/a/b/file", "find . -delete"):
