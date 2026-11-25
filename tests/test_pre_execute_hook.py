@@ -71,6 +71,9 @@ class PreExecuteHook(unittest.TestCase):
         self.assertFalse(gate.is_governance_command("python3 /tmp/x/scripts/governance.py set_state"))
         self.assertFalse(gate.is_governance_command(GOV_CMD + " && rm -rf build"))
         self.assertFalse(gate.is_governance_command(GOV_CMD + " $(rm -rf build)"))
+        self.assertFalse(gate.is_governance_command(GOV_CMD + " `rm -rf build`"))
+        log = 'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action "edited a; b > c"'
+        self.assertTrue(gate.is_governance_command(log))
 
     def test_fail_closed_on_bad_events(self):
         self.assertEqual(self.run_hook("High Security", "DEFENSE", "not json"), "deny")
@@ -83,9 +86,23 @@ class PreExecuteHook(unittest.TestCase):
     def test_legacy_env_input_still_works(self):
         self.assertEqual(self.run_hook("High Security", "DEFENSE", "", env_input="rm -rf /"), "ask")
 
-    def test_write_edit_unchanged(self):
+    def test_write_edit_unchanged_outside_the_plugin(self):
         self.assertEqual(self.run_hook("High Security", "SCOUT",
                                        {"tool_name": "Write", "tool_input": {"file_path": "/x"}}), "allow")
+
+    def test_file_tools_cannot_rewrite_governance_files(self):
+        for rel in ("data/governance_state.json", "hooks/pre-execute.sh", "scripts/governance.py"):
+            for tool in ("Write", "Edit"):
+                event = {"tool_name": tool, "tool_input": {"file_path": str(self.root / rel)}}
+                self.assertEqual(self.run_hook("High Security", "OFFENSE", event), "deny", (tool, rel))
+
+    def test_event_without_tool_name_blocks(self):
+        self.assertEqual(self.run_hook("High Security", "DEFENSE", {"tool_input": {"command": "ls"}}), "deny")
+
+    def test_stdin_event_wins_over_stale_env(self):
+        self.assertEqual(self.run_hook("High Security", "SCOUT",
+                                       {"tool_name": "Bash", "tool_input": {"command": "rm -rf build"}},
+                                       env_input="ls"), "deny")
 
 
 if __name__ == "__main__":
