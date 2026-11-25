@@ -33,8 +33,10 @@ import os
 import sys
 
 _PLUGIN_ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT", os.path.join(os.path.dirname(__file__), ".."))
-STATE_PATH = os.path.join(_PLUGIN_ROOT, "data", "governance_state.json")
-LEDGER_PATH = os.path.join(_PLUGIN_ROOT, "data", "audit_ledger.jsonl")
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "moses-governance-mcp"))
+from governance.store import GovernanceStore
+
+STATE_PATH = None
 
 
 # ── governance gate ───────────────────────────────────────────────────────────
@@ -44,37 +46,12 @@ class GovernanceBlock(Exception):
 
 
 def _load_state() -> dict | None:
-    if not os.path.exists(STATE_PATH):
-        return None
-    with open(STATE_PATH) as f:
-        return json.load(f)
+    return GovernanceStore().read().state
 
 
 def _governance_gate(state: dict, confirm: bool) -> dict:
-    """
-    Check posture and mode before any key access.
-
-    SCOUT   — always blocked. No state changes permitted.
-    DEFENSE — blocked unless --confirm is passed.
-    OFFENSE — permitted within active mode constraints.
-    """
-    posture = (state.get("posture") or "SCOUT").upper()
-    mode = state.get("mode", "unknown")
-    role = state.get("role", "unknown")
-
-    if posture == "SCOUT":
-        raise GovernanceBlock(
-            "BLOCKED — posture=SCOUT. No state changes permitted. "
-            "Set posture to DEFENSE (with --confirm) or OFFENSE to sign."
-        )
-
-    if posture == "DEFENSE" and not confirm:
-        raise GovernanceBlock(
-            "BLOCKED — posture=DEFENSE requires explicit operator confirmation. "
-            "Re-run with --confirm to authorize this signing operation."
-        )
-
-    return {"posture": posture, "mode": mode, "role": role}
+    del state, confirm
+    raise GovernanceBlock("Privileged signing is disabled: this package has no trusted operator identity provider. A command-line confirmation flag is not authenticated approval.")
 
 
 # ── cryptographic primitives ──────────────────────────────────────────────────
@@ -95,24 +72,13 @@ def _sign(payload: str, secret: str) -> str:
 
 def _write_audit(agent: str, action: str, detail: str, gov: dict) -> str:
     """Append to audit ledger. Returns entry hash."""
-    entry = {
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "component": "signing",
-        "action": action,
-        "agent": agent,
-        "governance": gov,
-        "detail": detail,
-    }
-    entry_hash = hashlib.sha256(
-        json.dumps(entry, sort_keys=True).encode()
-    ).hexdigest()
-    entry["hash"] = entry_hash
-
-    os.makedirs(os.path.dirname(LEDGER_PATH), exist_ok=True)
-    with open(LEDGER_PATH, "a") as f:
-        f.write(json.dumps(entry) + "\n")
-
-    return entry_hash[:16]
+    from governance.audit import AuditLedger, default_ledger_path
+    entry = AuditLedger(default_ledger_path()).log_action(
+        component="signing", action=action, detail={"detail": detail},
+        governance_mode=gov.get("mode", ""), posture=gov.get("posture", ""),
+        role=gov.get("role", ""), agent=agent,
+    )
+    return entry["hash"][:16]
 
 
 # ── commands ──────────────────────────────────────────────────────────────────
@@ -201,7 +167,7 @@ def cmd_status(_args):
     try:
         _governance_gate(state, confirm=True)
         gate = "REQUIRES_CONFIRM" if posture == "DEFENSE" else "OPEN"
-        note = "DEFENSE — signing permitted with --confirm only." if posture == "DEFENSE" else "Signing permitted."
+        note = "Signing unavailable until trusted operator identity is configured."
     except GovernanceBlock as e:
         gate = "BLOCKED"
         note = str(e)

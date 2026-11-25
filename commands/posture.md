@@ -1,5 +1,5 @@
 ---
-description: Set operational posture. Controls transaction policy and action scope for all Claude operations.
+description: Set operational posture through the shared, generation-checked state store.
 argument-hint: [scout|defense|offense]
 ---
 
@@ -26,22 +26,13 @@ Set the operational posture to "$ARGUMENTS". If no argument provided, show the c
 
 When invoked with a posture argument, execute these steps in order:
 
-**Step 1 — Persist the posture** (wires hook enforcement — do not skip):
+First run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status` and use the returned generation and state hash for this write. If the store reports a stale snapshot, read status again and reassess.
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" set_state \
   --posture "$ARGUMENTS" \
-  --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
-```
-
-**Step 2 — Log to audit trail**:
-
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
-  --component "governance" \
-  --action "posture_change" \
-  --posture "$ARGUMENTS" \
-  --ledger "${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
+  --expected-generation [GENERATION] \
+  --expected-hash [STATE_HASH]
 ```
 
 **Step 3 — Confirm to operator**:
@@ -49,10 +40,12 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
 ```
 ✓ Posture set: [POSTURE]
 Transaction policy: [policy from postures.md]
-Hook enforcement active. Audit entry logged.
+The transition is recorded in the shared history. Hook coverage applies only to supported host tool paths.
 ```
 
-When invoked with no argument, read `governance_state.json` and display current posture + its transaction policy.
+When invoked with no argument, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status` and display the current posture + its transaction policy.
+
+Without a trusted operator identity provider, posture increases are rejected. In particular, SCOUT cannot be raised to DEFENSE or OFFENSE. The supported recovery path allows a posture demotion; configure an operator-only identity provider before enabling escalation.
 
 ## Interaction with Governance Mode
 

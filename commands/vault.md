@@ -31,43 +31,36 @@ Manage vault documents. Action: "$ARGUMENTS". If empty, show currently loaded do
 
 Determine if the argument is a file path or a document name. Then:
 
-1. Load document into state file (persists to disk for hook layer):
+1. Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status` to read the current generation and state hash. Use those exact values for the write; if stale, read status again and reassess.
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" vault_load "[NAME]" \
   --category "[CATEGORY]" \
   --file "[PATH_IF_FILE]" \
-  --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
+  --expected-generation [GENERATION] \
+  --expected-hash [STATE_HASH]
 ```
 
 If the argument is inline content rather than a file path, use `--content "[CONTENT]"` instead of `--file`.
 
-2. Log to audit trail:
-
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
-  --component "vault" \
-  --action "vault_load" \
-  --detail "{\"name\": \"[NAME]\", \"category\": \"[CATEGORY]\"}" \
-  --ledger "${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
-```
-
-3. Confirm: `✓ Vault: [name] loaded (category: [cat]). Vault count: N. Audit entry logged.`
+2. Confirm the returned generation, state hash, and vault count. The committed transition is recorded in the shared history.
 
 **On `/vault unload [name]`:**
 
+First read the current generation and state hash with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status`.
+
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" vault_unload "[NAME]" \
-  --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
+  --expected-generation [GENERATION] \
+  --expected-hash [STATE_HASH]
 ```
 
-Then log and confirm: `✓ Vault: [name] unloaded. Vault count: N.`
+Confirm the returned generation, state hash, and vault count.
 
 **On `/vault list` or `/vault active`:**
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" vault_list \
-  --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" vault_list
 ```
 
-Loaded vault documents are injected into every governed context. They are constitutional inputs — not optional attachments.
+Loaded vault documents are available to the package context assembly function when an integration routes context through it.

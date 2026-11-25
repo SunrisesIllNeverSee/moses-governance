@@ -1,5 +1,5 @@
 ---
-description: Set role in the agent hierarchy. Controls authority level and behavioral boundaries in multi-agent workflows.
+description: Set role metadata through the shared, generation-checked state store.
 argument-hint: [primary|secondary|observer]
 ---
 
@@ -26,22 +26,13 @@ Set Claude's role to "$ARGUMENTS". If no argument provided, show the current act
 
 When invoked with a role argument, execute these steps in order:
 
-**Step 1 — Persist the role** (wires hook enforcement — do not skip):
+First run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status` and use the returned generation and state hash for this write. If the store reports a stale snapshot, read status again and reassess.
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" set_state \
   --role "$ARGUMENTS" \
-  --state "${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
-```
-
-**Step 2 — Log to audit trail**:
-
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
-  --component "governance" \
-  --action "role_change" \
-  --role "$ARGUMENTS" \
-  --ledger "${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
+  --expected-generation [GENERATION] \
+  --expected-hash [STATE_HASH]
 ```
 
 **Step 3 — Confirm to operator**:
@@ -49,10 +40,12 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/audit.py" log_action \
 ```
 ✓ Role set: [ROLE]
 Authority: [authority from roles.md]
-Sequence position confirmed. Audit entry logged.
+The transition is recorded in the shared history. Role values are policy metadata, not host-enforced identity.
 ```
 
-When invoked with no argument, read `governance_state.json` and display current role + its authority level.
+When invoked with no argument, run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance_store.py" status` and display the current role + its configured behavior.
+
+Without a trusted operator identity provider, role promotions are rejected. Configure an operator-only identity provider before changing to a more authoritative role.
 
 ## Sequence Enforcement
 

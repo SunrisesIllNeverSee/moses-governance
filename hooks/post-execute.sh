@@ -4,12 +4,13 @@
 # Place in .claude/hooks/post-execute.sh
 
 CLAUDE_PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-GOVERNANCE_STATE="${CLAUDE_PLUGIN_ROOT}/data/governance_state.json"
-AUDIT_LEDGER="${CLAUDE_PLUGIN_ROOT}/data/audit_ledger.jsonl"
+GOVERNANCE_DATA="${CLAUDE_PLUGIN_ROOT}/moses-governance-mcp/data"
+GOVERNANCE_STATE="${GOVERNANCE_DATA}/governance_state.json"
+AUDIT_LEDGER="${GOVERNANCE_DATA}/audit_ledger.jsonl"
 ERROR_LOG="${CLAUDE_PLUGIN_ROOT}/data/hook_errors.log"
 
 # Ensure data directory exists
-mkdir -p "${CLAUDE_PLUGIN_ROOT}/data"
+mkdir -p "${GOVERNANCE_DATA}"
 
 # Check Python availability
 if ! command -v python3 >/dev/null 2>&1; then

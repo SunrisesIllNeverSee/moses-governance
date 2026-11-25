@@ -44,6 +44,7 @@ from governance.audit import (
     hash_conversation,
     format_for_onchain,
 )
+from governance.store import GovernanceStore, GovernanceStoreError
 from governance.commitment import evaluate_commitment, score_commitment
 from governance.oracle import grok_verify_sync
 from governance.swarm import run_swarm_round, SwarmConfig
@@ -55,8 +56,6 @@ from governance.meta import (
     reject_proposal,
     rollback_amendment,
     constitution_status,
-    make_operator_sig,
-    _get_operator_secret,
 )
 
 # ---------------------------------------------------------------------------
@@ -73,26 +72,34 @@ mcp = FastMCP(
 # Session state (in-memory dict per session)
 # ---------------------------------------------------------------------------
 
-_sessions: dict[str, GovernanceState] = {}
 _ledgers: dict[str, AuditLedger] = {}
 
-DATA_DIR = Path(__file__).parent / "data"
-DATA_DIR.mkdir(exist_ok=True)
-
-GOVERNANCE_STATE_FILE = DATA_DIR / "governance_state.json"
+_store = GovernanceStore()
+DATA_DIR = _store.data_root
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+GOVERNANCE_STATE_FILE = _store.state_path
 
 
 def _get_session(session_id: str) -> GovernanceState:
-    """Return existing GovernanceState or create default for session_id."""
-    if session_id not in _sessions:
-        _sessions[session_id] = GovernanceState()
-    return _sessions[session_id]
+    """Load the latest verified shared state; MCP sessions never cache authority."""
+    snapshot = _store.read()
+    return GovernanceState(**snapshot.state)
+
+
+def _commit_state(session_id: str, operation: str, updates: dict, expected_generation: int | None, expected_hash: str | None, detail: dict | None = None):
+    if expected_generation is None or expected_hash is None:
+        raise GovernanceStoreError("Protected write requires expected_generation and expected_hash from govern_get_status.")
+    result = _store.transition(
+        operation, updates=updates, expected_generation=expected_generation,
+        expected_hash=expected_hash, actor=f"mcp-session:{session_id}", detail=detail or {},
+    )
+    return result
 
 
 def _get_ledger(session_id: str) -> AuditLedger:
     """Return existing AuditLedger or create one for session_id."""
     if session_id not in _ledgers:
-        ledger_path = DATA_DIR / f"audit_{session_id}.jsonl"
+        ledger_path = DATA_DIR / "audit_ledger.jsonl"
         _ledgers[session_id] = AuditLedger(ledger_path)
     return _ledgers[session_id]
 
@@ -107,19 +114,12 @@ def _resolve_session(ctx: Context | None) -> str:
     return "default"
 
 
-def _persist_state(gs: GovernanceState):
-    """Write governance state snapshot to governance_state.json."""
-    import dataclasses
-    snapshot = dataclasses.asdict(gs)
-    GOVERNANCE_STATE_FILE.write_text(json.dumps(snapshot, indent=2))
-
-
 # ---------------------------------------------------------------------------
 # GOVERNANCE TOOLS
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def govern_set_mode(mode: str, ctx: Context | None = None) -> dict:
+def govern_set_mode(mode: str, expected_generation: int | None = None, expected_hash: str | None = None, ctx: Context | None = None) -> dict:
     """
     Set the active governance mode.
     Accepts canonical names or aliases (idk, high-security, self-growth, etc.)
@@ -128,12 +128,11 @@ def govern_set_mode(mode: str, ctx: Context | None = None) -> dict:
     """
     session_id = _resolve_session(ctx)
     gs = _get_session(session_id)
-
     canonical = resolve_mode(mode)
-    gs.mode = canonical
-    _persist_state(gs)
+    snap = _commit_state(session_id, "govern.set_mode", {"mode": canonical}, expected_generation, expected_hash, {"mode": canonical})
+    gs = GovernanceState(**snap.state)
 
-    result = {"mode": canonical, **translate_mode(canonical)}
+    result = {"mode": canonical, **translate_mode(canonical), **snap.public_metadata()}
     _get_ledger(session_id).log_action(
         component="govern",
         action="set_mode",
@@ -146,7 +145,7 @@ def govern_set_mode(mode: str, ctx: Context | None = None) -> dict:
 
 
 @mcp.tool()
-def govern_set_posture(posture: str, ctx: Context | None = None) -> dict:
+def govern_set_posture(posture: str, expected_generation: int | None = None, expected_hash: str | None = None, ctx: Context | None = None) -> dict:
     """
     Set operational posture: SCOUT | DEFENSE | OFFENSE.
     SCOUT = read-only, no state changes.
@@ -159,8 +158,11 @@ def govern_set_posture(posture: str, ctx: Context | None = None) -> dict:
 
     canonical = posture.strip().upper()
     result = {"posture": canonical, **translate_posture(canonical)}
-    gs.posture = canonical
-    _persist_state(gs)
+    if canonical not in POSTURES:
+        raise GovernanceStoreError(f"Unsupported posture: {canonical}")
+    snap = _commit_state(session_id, "govern.set_posture", {"posture": canonical}, expected_generation, expected_hash, {"posture": canonical})
+    gs = GovernanceState(**snap.state)
+    result.update(snap.public_metadata())
 
     _get_ledger(session_id).log_action(
         component="govern",
@@ -174,7 +176,7 @@ def govern_set_posture(posture: str, ctx: Context | None = None) -> dict:
 
 
 @mcp.tool()
-def govern_set_role(role: str, ctx: Context | None = None) -> dict:
+def govern_set_role(role: str, expected_generation: int | None = None, expected_hash: str | None = None, ctx: Context | None = None) -> dict:
     """
     Set hierarchy role: Primary | Secondary | Observer.
     Primary leads. Secondary validates. Observer flags only.
@@ -185,8 +187,11 @@ def govern_set_role(role: str, ctx: Context | None = None) -> dict:
 
     canonical = role.strip().title()
     result = {"role": canonical, **get_role_instruction(canonical)}
-    gs.role = canonical
-    _persist_state(gs)
+    if canonical not in ROLES:
+        raise GovernanceStoreError(f"Unsupported role: {canonical}")
+    snap = _commit_state(session_id, "govern.set_role", {"role": canonical}, expected_generation, expected_hash, {"role": canonical})
+    gs = GovernanceState(**snap.state)
+    result.update(snap.public_metadata())
 
     _get_ledger(session_id).log_action(
         component="govern",
@@ -228,12 +233,15 @@ def govern_get_status(ctx: Context | None = None) -> dict:
     Return full current GovernanceState.
     Returns: {"mode": str, "posture": str, "role": str, "vault_documents": [...], ...all fields}
     """
-    session_id = _resolve_session(ctx)
-    gs = _get_session(session_id)
-
-    import dataclasses
-    status = dataclasses.asdict(gs)
-    status["vault_count"] = len(gs.vault_documents)
+    del ctx
+    report = _store.inspect()
+    if not report.get("valid"):
+        return {"store_valid": False, "reason": report.get("reason", "Governance store verification failed."),
+                "unverified_snapshot": report.get("unverified_snapshot"), "integrity": report.get("integrity")}
+    status = dict(report["state"])
+    status["vault_count"] = len(status.get("vault_documents", []))
+    status.update({key: report[key] for key in ("generation", "state_hash", "transition_hash")})
+    status["store_valid"] = True
     return status
 
 
@@ -273,7 +281,7 @@ def govern_assemble_context(
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def vault_load(name: str, content: str, category: str = "general", ctx: Context | None = None) -> dict:
+def vault_load(name: str, content: str, category: str = "general", expected_generation: int | None = None, expected_hash: str | None = None, ctx: Context | None = None) -> dict:
     """
     Load a governance document into the active vault.
     Injected into every governed context via assemble_context().
@@ -283,9 +291,10 @@ def vault_load(name: str, content: str, category: str = "general", ctx: Context 
     gs = _get_session(session_id)
 
     # Replace if name already exists
-    gs.vault_documents = [d for d in gs.vault_documents if d.get("name") != name]
-    gs.vault_documents.append({"name": name, "content": content, "category": category})
-    _persist_state(gs)
+    docs = [d for d in gs.vault_documents if d.get("name") != name]
+    docs.append({"name": name, "content": content, "category": category})
+    snap = _commit_state(session_id, "vault.load", {"vault_documents": docs}, expected_generation, expected_hash, {"name": name, "category": category})
+    gs = GovernanceState(**snap.state)
 
     _get_ledger(session_id).log_action(
         component="vault",
@@ -295,7 +304,7 @@ def vault_load(name: str, content: str, category: str = "general", ctx: Context 
         posture=gs.posture,
         role=gs.role,
     )
-    return {"loaded": name, "vault_count": len(gs.vault_documents)}
+    return {"loaded": name, "vault_count": len(gs.vault_documents), **snap.public_metadata()}
 
 
 @mcp.tool()
@@ -316,7 +325,7 @@ def vault_list(ctx: Context | None = None) -> dict:
 
 
 @mcp.tool()
-def vault_clear(ctx: Context | None = None) -> dict:
+def vault_clear(expected_generation: int | None = None, expected_hash: str | None = None, ctx: Context | None = None) -> dict:
     """
     Clear all documents from the vault.
     Returns: {"cleared": int}
@@ -325,8 +334,8 @@ def vault_clear(ctx: Context | None = None) -> dict:
     gs = _get_session(session_id)
 
     count = len(gs.vault_documents)
-    gs.vault_documents = []
-    _persist_state(gs)
+    snap = _commit_state(session_id, "vault.clear", {"vault_documents": []}, expected_generation, expected_hash, {"cleared": count})
+    gs = GovernanceState(**snap.state)
 
     _get_ledger(session_id).log_action(
         component="vault",
@@ -336,7 +345,7 @@ def vault_clear(ctx: Context | None = None) -> dict:
         posture=gs.posture,
         role=gs.role,
     )
-    return {"cleared": count}
+    return {"cleared": count, **snap.public_metadata()}
 
 
 # ---------------------------------------------------------------------------
@@ -576,6 +585,8 @@ def meta_analyze_trail(
     focus: list[str] | None = None,
     min_confidence: float = 0.8,
     exclude_tags: list[str] | None = None,
+    expected_generation: int | None = None,
+    expected_hash: str | None = None,
     ctx: Context | None = None,
 ) -> dict:
     """
@@ -601,8 +612,10 @@ def meta_analyze_trail(
         timeframe=timeframe,
         focus=focus,
         min_confidence=min_confidence,
-        ledger_name=f"audit_{session_id}.jsonl",
+        ledger_name="audit_ledger.jsonl",
         exclude_tags=exclude_tags or [],
+        expected_generation=expected_generation,
+        expected_hash=expected_hash,
     )
 
     _get_ledger(session_id).log_action(
@@ -637,6 +650,8 @@ def meta_list_proposals(status: str = "pending", ctx: Context | None = None) -> 
 def meta_apply_amendment(
     proposal_id: str,
     operator_signature: str,
+    expected_generation: int | None = None,
+    expected_hash: str | None = None,
     ctx: Context | None = None,
 ) -> dict:
     """
@@ -646,30 +661,16 @@ def meta_apply_amendment(
 
     Returns: {"success": bool, "new_version": str, "constitution_hash": str, "message": str}
     """
-    session_id = _resolve_session(ctx)
-    gs = _get_session(session_id)
-
-    result = apply_amendment(proposal_id, operator_signature)
-
-    _get_ledger(session_id).log_action(
-        component="meta",
-        action="apply_amendment",
-        detail={
-            "proposal_id": proposal_id,
-            "success": result["success"],
-            "new_version": result.get("new_version"),
-        },
-        governance_mode=gs.mode,
-        posture=gs.posture,
-        role=gs.role,
-    )
-    return result
+    del proposal_id, operator_signature, expected_generation, expected_hash, ctx
+    return {"success": False, "message": "Privileged approval is disabled: no trusted operator identity provider is configured. The requesting model cannot mint approval."}
 
 
 @mcp.tool()
 def meta_reject_proposal(
     proposal_id: str,
     reason: str,
+    expected_generation: int | None = None,
+    expected_hash: str | None = None,
     ctx: Context | None = None,
 ) -> dict:
     """
@@ -679,19 +680,20 @@ def meta_reject_proposal(
     Returns: {"success": bool, "message": str}
     """
     session_id = _resolve_session(ctx)
-    gs = _get_session(session_id)
-
-    result = reject_proposal(proposal_id, reason)
-
-    _get_ledger(session_id).log_action(
-        component="meta",
-        action="reject_proposal",
-        detail={"proposal_id": proposal_id, "reason": reason, "success": result["success"]},
-        governance_mode=gs.mode,
-        posture=gs.posture,
-        role=gs.role,
-    )
-    return result
+    if expected_generation is None or expected_hash is None:
+        return {"success": False, "message": "Protected write requires expected_generation and expected_hash from govern_get_status."}
+    proposal = get_proposal(proposal_id)
+    if not proposal:
+        return {"success": False, "message": f"Proposal '{proposal_id}' was not found."}
+    proposal["status"] = "rejected"
+    proposal["rejection_reason"] = reason
+    try:
+        snap = _store.transition("meta.reject_proposal", expected_generation=expected_generation, expected_hash=expected_hash,
+            resource_updates={f"proposals/rejected/{proposal_id}.json": json.dumps(proposal, ensure_ascii=False, indent=2), f"proposals/pending/{proposal_id}.json": None},
+            actor=f"mcp-session:{session_id}", detail={"proposal_id": proposal_id, "reason": reason})
+    except GovernanceStoreError as exc:
+        return {"success": False, "message": str(exc)}
+    return {"success": True, "message": f"Proposal '{proposal_id}' rejected.", **snap.public_metadata()}
 
 
 @mcp.tool()
@@ -732,71 +734,16 @@ def meta_rollback_amendment(
 
     Returns: {"success": bool, "message": str, "warning": str}
     """
-    session_id = _resolve_session(ctx)
-    gs = _get_session(session_id)
-
-    result = rollback_amendment(amendment_id, operator_signature, reason)
-
-    _get_ledger(session_id).log_action(
-        component="meta",
-        action="rollback_amendment",
-        detail={
-            "amendment_id": amendment_id,
-            "reason": reason,
-            "success": result.get("success"),
-        },
-        governance_mode=gs.mode,
-        posture=gs.posture,
-        role=gs.role,
-    )
-    return result
+    del amendment_id, operator_signature, reason, ctx
+    return {"success": False, "message": "Privileged approval is disabled: no trusted operator identity provider is configured. The requesting model cannot mint approval."}
 
 
 # ---------------------------------------------------------------------------
 # Operator Signature Helper
 # ---------------------------------------------------------------------------
 
-@mcp.tool()
-def meta_generate_sig(
-    operator_id: str,
-    proposal_id: str,
-    ctx: Context | None = None,
-) -> dict:
-    """
-    Generate a valid HMAC-SHA256 operator signature for use with meta_apply_amendment
-    or meta_rollback_amendment.
-
-    Requires MOSES_OPERATOR_SECRET to be set in the server environment.
-    The generated signature is scoped to the specific proposal_id — it cannot
-    be reused for a different proposal.
-
-    Args:
-        operator_id: Your operator identifier (e.g. "luthen")
-        proposal_id: The exact proposal ID you intend to approve or roll back
-
-    Returns:
-        {"signature": str, "operator_id": str, "proposal_id": str, "secret_configured": bool}
-        On error: {"error": str, "secret_configured": bool}
-    """
-    secret_configured = _get_operator_secret() is not None
-    try:
-        sig = make_operator_sig(operator_id, proposal_id)
-        return {
-            "signature": sig,
-            "operator_id": operator_id,
-            "proposal_id": proposal_id,
-            "secret_configured": secret_configured,
-            "usage": f"Pass this signature as operator_signature to meta_apply_amendment or meta_rollback_amendment",
-        }
-    except EnvironmentError as e:
-        return {
-            "error": str(e),
-            "secret_configured": False,
-            "action_required": (
-                "Set MOSES_OPERATOR_SECRET in your environment before starting the server. "
-                "Example: export MOSES_OPERATOR_SECRET=<your-random-secret>"
-            ),
-        }
+# No callable approval-minting tool is exposed to the requesting model. A
+# trusted operator identity/credential integration is required before approval.
 
 
 # ---------------------------------------------------------------------------
