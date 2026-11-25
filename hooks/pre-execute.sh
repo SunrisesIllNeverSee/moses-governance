@@ -45,12 +45,35 @@ if [ -z "$MODE" ] || [ "$MODE" = "null" ]; then
     exit 0
 fi
 
-# Evaluate proposed action against active governance rules
+# Evaluate proposed action against active governance rules.
+# Claude Code sends the event as JSON on stdin; CLAUDE_TOOL_INPUT is a legacy
+# fallback. Only Bash commands are evaluated here (Write/Edit unchanged).
 ACTION="${CLAUDE_TOOL_INPUT:-}"
+if [ -z "$ACTION" ] && [ ! -t 0 ]; then
+    ACTION=$(python3 -c '
+import json, sys
+try:
+    e = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+if str(e.get("tool_name", "")).lower() == "bash":
+    print((e.get("tool_input") or {}).get("command", ""))
+' 2>>"$ERROR_LOG")
+fi
 if [ -n "$ACTION" ]; then
     RESULT=$(python3 "${CLAUDE_PLUGIN_ROOT}/scripts/governance.py" check_action "$ACTION" --state "$GOVERNANCE_STATE" 2>>"$ERROR_LOG")
-    if echo "$RESULT" | python3 -c "import sys,json; r=json.load(sys.stdin); exit(0 if r.get('permitted',True) else 1)" 2>/dev/null; then
+    # allow | ask (permitted, but the mode requires operator confirmation) | deny
+    VERDICT=$(echo "$RESULT" | python3 -c "import sys,json; r=json.load(sys.stdin); print('deny' if not r.get('permitted', False) else ('ask' if r.get('conditions') else 'allow'))" 2>/dev/null || echo deny)
+    if [ "$VERDICT" = "allow" ]; then
         echo "✓ MO§ES™ Governance active: $MODE"
+        exit 0
+    elif [ "$VERDICT" = "ask" ]; then
+        echo "$RESULT" | python3 -c "
+import sys, json
+r = json.load(sys.stdin)
+reason = 'MO§ES™ requires operator confirmation: ' + '; '.join(map(str, r.get('conditions', [])))
+print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'permissionDecision': 'ask', 'permissionDecisionReason': reason}}))
+"
         exit 0
     else
         REASON=$(echo "$RESULT" | python3 -c "import sys,json; r=json.load(sys.stdin); print(r.get('reason','Action blocked by governance'))" 2>/dev/null || echo "Action blocked by MO§ES™ governance")
